@@ -6,12 +6,14 @@ ANALISIS_TOKU_ENTREVISTA.md
 
 # Archivos de compilación LaTeX
 *.aux
+*.out
 *.bbl
 *.blg
 *.fdb_latexmk
 *.fls
 *.lof
 *.lot
+*.log
 *.toc
 *.nav
 *.snm
