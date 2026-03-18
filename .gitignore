@@ -4,23 +4,10 @@ ofertas-toku-dcc/
 # Excluir análisis
 ANALISIS_TOKU_ENTREVISTA.md
 
-# Archivos de compilación LaTeX
-*.aux
-*.out
-*.bbl
-*.blg
-*.fdb_latexmk
-*.fls
-*.lof
-*.lot
-*.log
-*.toc
-*.nav
-*.snm
-
 # Otros archivos compilados
 *.dvi
 *.ps
+*.pdf
 
 # Archivos de sistema
 .DS_Store
