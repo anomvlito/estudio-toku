@@ -8,6 +8,8 @@ ANALISIS_TOKU_ENTREVISTA.md
 *.dvi
 *.ps
 *.pdf
+*.out
+*.log
 
 # Archivos de sistema
 .DS_Store
