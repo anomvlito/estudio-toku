@@ -1,0 +1,713 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multicol}
+
+% Colores
+\definecolor{pgblue}{RGB}{51,103,145}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{alertred}{RGB}{220,50,50}
+\definecolor{tipgreen}{RGB}{39,174,96}
+\definecolor{warnambel}{RGB}{230,126,34}
+\definecolor{darkgray}{RGB}{50,50,50}
+\definecolor{sqlkw}{RGB}{0,0,200}
+
+% SQL listing
+\lstdefinelanguage{SQL}{
+  keywords={SELECT,FROM,WHERE,INSERT,INTO,VALUES,UPDATE,SET,DELETE,
+            CREATE,TABLE,INDEX,ON,ALTER,ADD,DROP,WITH,AS,
+            JOIN,LEFT,RIGHT,INNER,OUTER,FULL,CROSS,
+            GROUP,BY,ORDER,HAVING,LIMIT,OFFSET,
+            RETURNING,EXPLAIN,ANALYZE,BEGIN,COMMIT,ROLLBACK,
+            TRANSACTION,ISOLATION,LEVEL,REPEATABLE,READ,SERIALIZABLE,
+            UNIQUE,PRIMARY,KEY,FOREIGN,REFERENCES,NOT,NULL,DEFAULT,
+            AND,OR,IN,EXISTS,BETWEEN,LIKE,ILIKE,IS,
+            COALESCE,NULLIF,CASE,WHEN,THEN,ELSE,END,
+            COUNT,SUM,AVG,MIN,MAX,ARRAY_AGG,JSON_AGG,STRING_AGG,
+            PARTITION,OVER,ROW_NUMBER,RANK,DENSE_RANK,LAG,LEAD,
+            NOW,CURRENT_TIMESTAMP,INTERVAL,EXTRACT,DATE_TRUNC,
+            SERIAL,BIGSERIAL,UUID,JSONB,VARCHAR,TEXT,INTEGER,BIGINT,
+            NUMERIC,DECIMAL,BOOLEAN,TIMESTAMP,DATE,
+            DO,LANGUAGE,PLPGSQL,FUNCTION,RETURNS,DECLARE,BEGIN},
+  sensitive=false,
+  morestring=[b]',
+  morestring=[b]",
+  morecomment=[l]{--},
+  morecomment=[s]{/*}{*/}
+}
+
+\lstdefinestyle{sql}{
+  language=SQL,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{sqlkw}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{pgblue!40},
+  breaklines=true, tabsize=2,
+  showstringspaces=false,
+}
+
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{pgblue}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{pgblue!40},
+  breaklines=true, tabsize=2,
+  showstringspaces=false,
+}
+
+% Soporte UTF-8 en listings (español)
+\lstset{
+  literate=
+    {á}{{\'{a}}}1 {é}{{\'{e}}}1 {í}{{\'{i}}}1 {ó}{{\'{o}}}1 {ú}{{\'{u}}}1
+    {Á}{{\'{A}}}1 {É}{{\'{E}}}1 {Í}{{\'{I}}}1 {Ó}{{\'{O}}}1 {Ú}{{\'{U}}}1
+    {ñ}{{\~{n}}}1 {Ñ}{{\~{N}}}1 {ü}{{\"u}}1
+    {¿}{{?`}}1 {¡}{{!`}}1
+}
+
+\newtcolorbox{tipbox}{colback=tipgreen!10,colframe=tipgreen,title=\textbf{Tip},fonttitle=\small\bfseries}
+\newtcolorbox{alertbox}{colback=alertred!10,colframe=alertred,title=\textbf{Ojo},fonttitle=\small\bfseries}
+\newtcolorbox{ejerciciobox}[1]{colback=warnambel!8,colframe=warnambel,title=\textbf{Ejercicio #1},fonttitle=\small\bfseries}
+\newtcolorbox{solucionbox}[1]{colback=tipgreen!8,colframe=tipgreen!60,title=\textbf{Solución #1},fonttitle=\small\bfseries}
+\newtcolorbox{contextobox}{colback=pgblue!5,colframe=pgblue,title=\textbf{Contexto Toku},fonttitle=\small\bfseries}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{pgblue}{\textbf{PostgreSQL Esencial}}}
+\rhead{\textcolor{gray}{Preparación Técnica — Toku}}
+\cfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{pgblue}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+\begin{document}
+
+% ─── PORTADA ─────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{pgblue} PostgreSQL Esencial\par}
+  \vspace{0.5cm}
+  {\large\color{gray} Para una entrevista en Toku — Enfoque en Pagos\par}
+  \vspace{0.3cm}
+  \textcolor{pgblue!50}{\rule{8cm}{2pt}}
+  \vspace{1.5cm}
+
+  \begin{tcolorbox}[colback=pgblue!5,colframe=pgblue,width=10cm]
+    \centering
+    \textbf{Foco:} Lo que sí o sí debes saber\\[4pt]
+    \textbf{Contexto:} Modelado de cobros recurrentes\\[4pt]
+    \textbf{Nivel:} Conoces SQL básico (tienes Supabase)
+  \end{tcolorbox}
+
+  \vspace{1.5cm}
+  \begin{tabular}{ll}
+    \textcolor{pgblue}{\textbullet} & Modelo de datos de Toku en SQL\\
+    \textcolor{pgblue}{\textbullet} & Transacciones ACID\\
+    \textcolor{pgblue}{\textbullet} & Índices y performance\\
+    \textcolor{pgblue}{\textbullet} & Window functions\\
+    \textcolor{pgblue}{\textbullet} & JSONB para datos flexibles\\
+    \textcolor{pgblue}{\textbullet} & Queries analíticas de pagos\\
+    \textcolor{warnambel}{\textbullet} & 5 Ejercicios orientados a Toku\\
+  \end{tabular}
+  \vfill
+  {\small\color{gray} Marzo 2026 — Estudio Personal\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─── SECCIÓN 1: MODELO DE DATOS ──────────────────────────────────────────────
+\section{Modelo de Datos de Toku en PostgreSQL}
+
+\begin{contextobox}
+Toku maneja: \textbf{organizaciones} (sus clientes), \textbf{customers} (los pagadores),
+\textbf{subscriptions} (agrupador), \textbf{invoices} (deudas), \textbf{payment\_methods} y \textbf{transactions}.
+Modelar esto bien es fundamental para entender su dominio técnico.
+\end{contextobox}
+
+\begin{lstlisting}[style=sql]
+-- Organizacion que contrata Toku
+CREATE TABLE organizations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nombre TEXT NOT NULL,
+  pais TEXT NOT NULL CHECK (pais IN ('CL', 'MX', 'BR')),
+  api_key TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Pagador final
+CREATE TABLE customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  external_id TEXT,  -- ID del sistema del cliente
+  nombre TEXT NOT NULL,
+  email TEXT NOT NULL,
+  telefono TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(organization_id, external_id)  -- unicidad por org
+);
+
+-- Agrupador de deudas (por producto)
+CREATE TABLE subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES customers(id),
+  product_id TEXT NOT NULL,
+  nombre TEXT,
+  activa BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Deuda individual
+CREATE TABLE invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES customers(id),
+  subscription_id UUID REFERENCES subscriptions(id),
+  external_id TEXT,
+  monto INTEGER NOT NULL CHECK (monto > 0),  -- en centavos
+  moneda TEXT NOT NULL DEFAULT 'CLP',
+  estado TEXT NOT NULL DEFAULT 'pending'
+    CHECK (estado IN ('pending','paid','failed','void','partially_paid')),
+  fecha_vencimiento DATE NOT NULL,
+  pagada_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Metodo de pago (PAC, tarjeta, PIX...)
+CREATE TABLE payment_methods (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES customers(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('pac','pat','card','pix','boleto','clabe')),
+  activo BOOLEAN DEFAULT TRUE,
+  metadatos JSONB,  -- datos variables segun tipo
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Intento de cobro
+CREATE TABLE transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id UUID NOT NULL REFERENCES invoices(id),
+  payment_method_id UUID REFERENCES payment_methods(id),
+  monto INTEGER NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pending'
+    CHECK (estado IN ('pending','completed','failed')),
+  error_codigo TEXT,
+  error_detalle TEXT,
+  procesado_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+\end{lstlisting}
+
+\subsection{Índices esenciales para este modelo}
+
+\begin{lstlisting}[style=sql]
+-- Los indices mas importantes para queries de pagos
+CREATE INDEX idx_invoices_customer ON invoices(customer_id);
+CREATE INDEX idx_invoices_estado ON invoices(estado);
+CREATE INDEX idx_invoices_vencimiento ON invoices(fecha_vencimiento);
+CREATE INDEX idx_transactions_invoice ON transactions(invoice_id);
+CREATE INDEX idx_customers_org ON customers(organization_id);
+
+-- Indice compuesto: queries frecuentes de "todas las facturas pendientes de una org"
+CREATE INDEX idx_inv_org_estado ON invoices(customer_id, estado)
+  WHERE estado = 'pending';  -- indice parcial, mucho mas eficiente
+\end{lstlisting}
+
+\begin{tipbox}
+Los \textbf{índices parciales} (\texttt{WHERE ...}) son muy poderosos: si el 90\% de las queries
+buscan facturas \texttt{pending}, un índice parcial solo en ese estado es mucho más pequeño y rápido.
+\end{tipbox}
+
+% ─── SECCIÓN 2: TRANSACCIONES ACID ───────────────────────────────────────────
+\section{Transacciones ACID — Crítico para Pagos}
+
+\begin{tcolorbox}[colback=pgblue!5,colframe=pgblue]
+\textbf{ACID} = Atomicidad, Consistencia, Isolación, Durabilidad.
+En pagos, un error a mitad de proceso (cobrar sin registrar) es catastrófico.
+\end{tcolorbox}
+
+\subsection{Transacción básica}
+
+\begin{lstlisting}[style=sql]
+-- Escenario: registrar un pago exitoso
+BEGIN;
+
+  -- 1. Marcar la factura como pagada
+  UPDATE invoices
+  SET estado = 'paid', pagada_at = NOW(), updated_at = NOW()
+  WHERE id = 'inv_123' AND estado = 'pending';
+
+  -- Verificar que se actualizó (si no, rollback)
+  -- En la app esto se hace con rowcount
+
+  -- 2. Registrar la transaccion
+  INSERT INTO transactions (invoice_id, monto, estado, procesado_at)
+  VALUES ('inv_123', 50000, 'completed', NOW());
+
+COMMIT;
+
+-- Si algo falla en el medio, todo queda como estaba
+\end{lstlisting}
+
+\subsection{Niveles de aislamiento — Para entrevista}
+
+\begin{center}
+\begin{tabular}{lcccp{3.5cm}}
+\toprule
+\textbf{Nivel} & \textbf{Dirty Read} & \textbf{Non-rep. Read} & \textbf{Phantom} & \textbf{Cuándo usar} \\
+\midrule
+READ COMMITTED & No & Sí & Sí & Default PG, mayoría de casos \\
+REPEATABLE READ & No & No & No & Reportes consistentes \\
+SERIALIZABLE & No & No & No & Cobros críticos, evitar doble cobro \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{lstlisting}[style=sql]
+-- Para cobros criticos: evitar que dos procesos cobren al mismo cliente
+BEGIN ISOLATION LEVEL SERIALIZABLE;
+  SELECT * FROM invoices WHERE id = 'inv_123' FOR UPDATE;
+  -- ... procesar cobro ...
+COMMIT;
+\end{lstlisting}
+
+\subsection{SELECT FOR UPDATE — Evitar doble cobro}
+
+\begin{lstlisting}[style=sql]
+-- Patron critico para pagos: bloquear fila antes de procesar
+BEGIN;
+  -- Esto bloquea la fila para otros procesos concurrentes
+  SELECT id, estado, monto
+  FROM invoices
+  WHERE id = 'inv_123' AND estado = 'pending'
+  FOR UPDATE SKIP LOCKED;  -- SKIP LOCKED: no espera, simplemente omite
+
+  -- Si no devuelve nada = ya fue tomada por otro proceso (idempotencia!)
+
+COMMIT;
+\end{lstlisting}
+
+\begin{alertbox}
+\textbf{SKIP LOCKED} es fundamental en sistemas de cobros batch.
+Permite que múltiples workers procesen facturas en paralelo sin pisarse.
+Si una factura está siendo procesada, simplemente se salta al siguiente.
+\end{alertbox}
+
+% ─── SECCIÓN 3: QUERIES ANALÍTICAS ───────────────────────────────────────────
+\section{Queries Analíticas para Cobros}
+
+\subsection{Window Functions}
+
+\begin{lstlisting}[style=sql]
+-- Ranking de clientes por monto total pagado (en una organizacion)
+SELECT
+  c.nombre,
+  SUM(t.monto) AS total_pagado,
+  RANK() OVER (ORDER BY SUM(t.monto) DESC) AS ranking,
+  ROW_NUMBER() OVER (ORDER BY SUM(t.monto) DESC) AS fila
+FROM customers c
+JOIN invoices i ON i.customer_id = c.id
+JOIN transactions t ON t.invoice_id = i.id
+WHERE t.estado = 'completed'
+  AND c.organization_id = 'org_123'
+GROUP BY c.id, c.nombre;
+
+-- Tasa de exito de cobros por mes
+SELECT
+  DATE_TRUNC('month', created_at) AS mes,
+  COUNT(*) FILTER (WHERE estado = 'completed') AS exitosos,
+  COUNT(*) AS total,
+  ROUND(
+    100.0 * COUNT(*) FILTER (WHERE estado = 'completed') / COUNT(*), 2
+  ) AS tasa_exito
+FROM transactions
+GROUP BY mes
+ORDER BY mes DESC;
+\end{lstlisting}
+
+\subsection{CTEs (Common Table Expressions)}
+
+\begin{lstlisting}[style=sql]
+-- Identificar clientes con facturas vencidas y sin metodo de pago activo
+WITH facturas_vencidas AS (
+  SELECT DISTINCT customer_id
+  FROM invoices
+  WHERE estado = 'pending'
+    AND fecha_vencimiento < CURRENT_DATE
+),
+sin_metodo_pago AS (
+  SELECT c.id AS customer_id
+  FROM customers c
+  WHERE NOT EXISTS (
+    SELECT 1 FROM payment_methods pm
+    WHERE pm.customer_id = c.id AND pm.activo = TRUE
+  )
+)
+SELECT c.id, c.nombre, c.email
+FROM customers c
+JOIN facturas_vencidas fv ON fv.customer_id = c.id
+JOIN sin_metodo_pago smp ON smp.customer_id = c.id;
+\end{lstlisting}
+
+\subsection{Reintentos de cobro — Query de candidatos}
+
+\begin{lstlisting}[style=sql]
+-- Facturas que fallaron pero son reintentables (menos de 5 intentos)
+WITH intentos AS (
+  SELECT
+    invoice_id,
+    COUNT(*) AS num_intentos,
+    MAX(created_at) AS ultimo_intento
+  FROM transactions
+  WHERE estado = 'failed'
+  GROUP BY invoice_id
+)
+SELECT
+  i.id,
+  i.monto,
+  i.customer_id,
+  intentos.num_intentos,
+  intentos.ultimo_intento
+FROM invoices i
+JOIN intentos ON intentos.invoice_id = i.id
+WHERE i.estado = 'pending'
+  AND intentos.num_intentos < 5
+  AND intentos.ultimo_intento < NOW() - INTERVAL '1 hour'
+ORDER BY intentos.ultimo_intento ASC;
+\end{lstlisting}
+
+% ─── SECCIÓN 4: JSONB ────────────────────────────────────────────────────────
+\section{JSONB — Datos Flexibles}
+
+\begin{contextobox}
+Los metadatos de payment\_methods varían por tipo (PAC tiene número de cuenta, PIX tiene llave,
+tarjeta tiene últimos 4 dígitos...). JSONB permite guardar esto sin romper el schema.
+\end{contextobox}
+
+\begin{lstlisting}[style=sql]
+-- Insertar con JSONB
+INSERT INTO payment_methods (customer_id, tipo, metadatos)
+VALUES (
+  'cust_123',
+  'pac',
+  '{"banco": "Banco de Chile", "cuenta_enmascarada": "****1234", "validado": true}'::jsonb
+);
+
+-- Consultar por campo JSONB
+SELECT * FROM payment_methods
+WHERE tipo = 'pac'
+  AND metadatos->>'banco' = 'Banco de Chile';
+
+-- Operadores JSONB
+-- ->  devuelve JSONB
+-- ->> devuelve TEXT
+-- #>> path profundo como texto
+
+SELECT
+  metadatos->>'banco' AS banco,
+  (metadatos->>'validado')::boolean AS validado,
+  metadatos->'cuenta_enmascarada' AS cuenta_json  -- es JSONB, no text
+FROM payment_methods WHERE tipo = 'pac';
+
+-- Indice en campo JSONB
+CREATE INDEX idx_pm_banco ON payment_methods ((metadatos->>'banco'));
+CREATE INDEX idx_pm_gin ON payment_methods USING GIN (metadatos);
+-- GIN: permite buscar dentro del JSON de forma eficiente
+\end{lstlisting}
+
+% ─── SECCIÓN 5: PERFORMANCE ──────────────────────────────────────────────────
+\section{Performance — EXPLAIN ANALYZE}
+
+\begin{lstlisting}[style=sql]
+-- Ver el plan de ejecucion de una query
+EXPLAIN ANALYZE
+SELECT c.nombre, COUNT(i.id) AS facturas_pendientes
+FROM customers c
+JOIN invoices i ON i.customer_id = c.id
+WHERE i.estado = 'pending'
+GROUP BY c.id, c.nombre;
+
+-- Resultados a entender:
+-- Seq Scan    = recorre toda la tabla (malo para tablas grandes)
+-- Index Scan  = usa un indice (bueno)
+-- Bitmap Scan = combina indices (intermedio)
+-- Hash Join   = join eficiente para grandes tablas
+-- Nested Loop = join eficiente cuando una tabla es pequena
+
+-- Regla: si ves Seq Scan en tabla grande -> necesitas un indice
+\end{lstlisting}
+
+\begin{tipbox}
+\textbf{Regla práctica para la entrevista}: columnas que aparecen en \texttt{WHERE},
+\texttt{JOIN ON}, \texttt{ORDER BY} con frecuencia son candidatas a índice.
+No indexar todo: los índices ralentizan \texttt{INSERT}/\texttt{UPDATE}.
+\end{tipbox}
+
+% ─── SECCIÓN 6: PYTHON + POSTGRESQL ──────────────────────────────────────────
+\section{PostgreSQL desde Python (asyncpg / SQLAlchemy)}
+
+\begin{lstlisting}[style=python]
+import asyncpg
+import asyncio
+
+async def main():
+    conn = await asyncpg.connect("postgresql://user:pass@localhost/toku")
+
+    # Query parametrizado (NUNCA concatenar strings -> SQL injection)
+    invoice = await conn.fetchrow(
+        "SELECT * FROM invoices WHERE id = $1 AND estado = $2",
+        "inv_123", "pending"
+    )
+
+    # Transaccion
+    async with conn.transaction():
+        await conn.execute(
+            "UPDATE invoices SET estado = $1, pagada_at = NOW() WHERE id = $2",
+            "paid", "inv_123"
+        )
+        await conn.execute(
+            "INSERT INTO transactions (invoice_id, monto, estado) VALUES ($1, $2, $3)",
+            "inv_123", 50000, "completed"
+        )
+    # Si hay excepcion, hace rollback automatico
+
+    await conn.close()
+
+asyncio.run(main())
+\end{lstlisting}
+
+\begin{alertbox}
+\textbf{Nunca} hagas: \texttt{f"SELECT * FROM invoices WHERE id = '\{invoice\_id\}'"}.
+Esto es SQL injection. Siempre usa parámetros (\texttt{\$1}, \texttt{\$2}...).
+\end{alertbox}
+
+% ─── SECCIÓN 7: EJERCICIOS ───────────────────────────────────────────────────
+\section{Ejercicios Orientados a Toku}
+
+\begin{ejerciciobox}{1 — Tasa de cobro exitoso}
+Escribe una query que devuelva, por organización, la tasa de éxito de cobros
+del último mes (transacciones completadas vs total).
+\end{ejerciciobox}
+
+\begin{solucionbox}{1}
+\begin{lstlisting}[style=sql]
+SELECT
+  o.nombre AS organizacion,
+  COUNT(t.id) FILTER (WHERE t.estado = 'completed') AS exitosos,
+  COUNT(t.id) AS total,
+  ROUND(
+    100.0 * COUNT(t.id) FILTER (WHERE t.estado = 'completed')
+    / NULLIF(COUNT(t.id), 0), 2
+  ) AS tasa_pct
+FROM organizations o
+JOIN customers c ON c.organization_id = o.id
+JOIN invoices i ON i.customer_id = c.id
+JOIN transactions t ON t.invoice_id = i.id
+WHERE t.created_at >= DATE_TRUNC('month', NOW())
+GROUP BY o.id, o.nombre
+ORDER BY tasa_pct DESC;
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{2 — Clientes morosos}
+Lista los clientes con más de 2 facturas vencidas (fecha\_vencimiento anterior a hoy)
+en estado \texttt{pending}, ordenados por monto total vencido descendente.
+\end{ejerciciobox}
+
+\begin{solucionbox}{2}
+\begin{lstlisting}[style=sql]
+SELECT
+  c.id,
+  c.nombre,
+  c.email,
+  COUNT(i.id) AS facturas_vencidas,
+  SUM(i.monto) AS monto_total_vencido
+FROM customers c
+JOIN invoices i ON i.customer_id = c.id
+WHERE i.estado = 'pending'
+  AND i.fecha_vencimiento < CURRENT_DATE
+GROUP BY c.id, c.nombre, c.email
+HAVING COUNT(i.id) > 2
+ORDER BY monto_total_vencido DESC;
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{3 — Idempotencia de eventos}
+Diseña una tabla \texttt{webhook\_events} que permita registrar eventos recibidos
+y garantizar idempotencia (no procesar el mismo evento dos veces).
+\end{ejerciciobox}
+
+\begin{solucionbox}{3}
+\begin{lstlisting}[style=sql]
+CREATE TABLE webhook_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id TEXT NOT NULL UNIQUE,  -- ID del evento de Toku
+  event_type TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  procesado_at TIMESTAMPTZ,
+  estado TEXT NOT NULL DEFAULT 'recibido'
+    CHECK (estado IN ('recibido', 'procesando', 'completado', 'error')),
+  error_detalle TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_wh_event_id ON webhook_events(event_id);
+CREATE INDEX idx_wh_estado ON webhook_events(estado)
+  WHERE estado != 'completado';  -- indice parcial
+
+-- Al recibir un evento:
+INSERT INTO webhook_events (event_id, event_type, payload)
+VALUES ('evt_123', 'invoice.paid', '{"invoice_id": "inv_001"}'::jsonb)
+ON CONFLICT (event_id) DO NOTHING;  -- si ya existe, ignorar
+-- Si rowcount = 0 -> evento duplicado, no procesar
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{4 — Retención de clientes}
+¿Qué porcentaje de clientes que pagaron en el mes anterior también pagaron este mes?
+\end{ejerciciobox}
+
+\begin{solucionbox}{4}
+\begin{lstlisting}[style=sql]
+WITH mes_anterior AS (
+  SELECT DISTINCT i.customer_id
+  FROM invoices i
+  JOIN transactions t ON t.invoice_id = i.id
+  WHERE t.estado = 'completed'
+    AND DATE_TRUNC('month', t.procesado_at) =
+        DATE_TRUNC('month', NOW()) - INTERVAL '1 month'
+),
+mes_actual AS (
+  SELECT DISTINCT i.customer_id
+  FROM invoices i
+  JOIN transactions t ON t.invoice_id = i.id
+  WHERE t.estado = 'completed'
+    AND DATE_TRUNC('month', t.procesado_at) = DATE_TRUNC('month', NOW())
+)
+SELECT
+  COUNT(DISTINCT ma.customer_id) AS pagaron_mes_anterior,
+  COUNT(DISTINCT mac.customer_id) AS tambien_pagaron_este_mes,
+  ROUND(
+    100.0 * COUNT(DISTINCT mac.customer_id) /
+    NULLIF(COUNT(DISTINCT ma.customer_id), 0), 2
+  ) AS retencion_pct
+FROM mes_anterior ma
+LEFT JOIN mes_actual mac ON mac.customer_id = ma.customer_id;
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{5 — Trade-off de diseño}
+En una entrevista te preguntan: ¿guardarías los estados de una factura en la tabla
+\texttt{invoices} (campo \texttt{estado}) o en una tabla aparte
+\texttt{invoice\_estado\_history}? Argumenta ambas y di cuándo usarías cada una.
+\end{ejerciciobox}
+
+\begin{solucionbox}{5}
+\begin{tcolorbox}[colback=tipgreen!5,colframe=tipgreen!60]
+\textbf{Columna estado en invoices (simple):}
+\begin{itemize}
+  \item Pro: Queries simples (\texttt{WHERE estado = 'pending'})
+  \item Pro: Bajo overhead, sin joins
+  \item Con: No tienes historial de transiciones
+  \item Con: No puedes saber cuánto tiempo estuvo en cada estado
+  \item Úsalo cuando: solo importa el estado actual
+\end{itemize}
+
+\textbf{Tabla de historial (event sourcing lite):}
+\begin{lstlisting}[style=sql]
+CREATE TABLE invoice_estado_history (
+  id SERIAL PRIMARY KEY,
+  invoice_id UUID NOT NULL REFERENCES invoices(id),
+  estado_anterior TEXT,
+  estado_nuevo TEXT NOT NULL,
+  motivo TEXT,
+  changed_at TIMESTAMPTZ DEFAULT NOW(),
+  changed_by TEXT  -- sistema, usuario, webhook
+);
+\end{lstlisting}
+\begin{itemize}
+  \item Pro: Auditoría completa, debugging de pagos
+  \item Pro: Puedes reconstruir qué pasó con una factura
+  \item Con: Más complejidad, más espacio
+  \item Úsalo cuando: hay disputas, chargebacks, necesitas auditoría
+\end{itemize}
+
+\textbf{Respuesta Toku}: probablemente ambas. El estado actual en
+\texttt{invoices} para eficiencia, y un historial en tabla separada
+para auditoría y debugging. En pagos, el historial es casi siempre necesario.
+\end{tcolorbox}
+\end{solucionbox}
+
+\newpage
+\section{Cheatsheet SQL para Pagos}
+
+\begin{multicols}{2}
+\textbf{\textcolor{pgblue}{Agregaciones frecuentes}}
+\begin{lstlisting}[style=sql,numbers=none]
+COUNT(*) FILTER (WHERE cond)
+SUM(monto) / NULLIF(COUNT(*), 0)
+DATE_TRUNC('month', created_at)
+NOW() - INTERVAL '30 days'
+\end{lstlisting}
+
+\textbf{\textcolor{pgblue}{Window functions}}
+\begin{lstlisting}[style=sql,numbers=none]
+ROW_NUMBER() OVER (ORDER BY x)
+RANK() OVER (PARTITION BY a ORDER BY b)
+LAG(col, 1) OVER (ORDER BY fecha)
+LEAD(col, 1) OVER (ORDER BY fecha)
+\end{lstlisting}
+
+\textbf{\textcolor{pgblue}{Transacciones}}
+\begin{lstlisting}[style=sql,numbers=none]
+BEGIN;
+  UPDATE ... WHERE id = $1 FOR UPDATE;
+  INSERT INTO ...;
+COMMIT; -- o ROLLBACK;
+\end{lstlisting}
+
+\columnbreak
+
+\textbf{\textcolor{pgblue}{Idempotencia}}
+\begin{lstlisting}[style=sql,numbers=none]
+INSERT INTO t (event_id, ...)
+VALUES (...)
+ON CONFLICT (event_id) DO NOTHING;
+\end{lstlisting}
+
+\textbf{\textcolor{pgblue}{JSONB}}
+\begin{lstlisting}[style=sql,numbers=none]
+col->>'campo'        -- texto
+col->'campo'         -- jsonb
+col @> '{"k":"v"}'  -- contiene
+\end{lstlisting}
+
+\textbf{\textcolor{pgblue}{Índices clave}}
+\begin{lstlisting}[style=sql,numbers=none]
+CREATE INDEX ON t(col);
+CREATE INDEX ON t(col) WHERE estado='pending';
+CREATE INDEX ON t USING GIN (jsonb_col);
+EXPLAIN ANALYZE SELECT ...;
+\end{lstlisting}
+\end{multicols}
+
+\end{document}

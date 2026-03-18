@@ -1,0 +1,434 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multicol}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+
+% Colores
+\definecolor{tokunavy}{RGB}{20,55,100}
+\definecolor{tokucyan}{RGB}{0,160,180}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{alertred}{RGB}{220,50,50}
+\definecolor{tipgreen}{RGB}{39,174,96}
+\definecolor{warnambel}{RGB}{230,126,34}
+\definecolor{darkgray}{RGB}{50,50,50}
+\definecolor{clpurple}{RGB}{130,60,160}
+\definecolor{mxred}{RGB}{190,30,45}
+\definecolor{brgreen}{RGB}{0,130,80}
+
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{tokunavy}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{tokucyan!40},
+  breaklines=true, tabsize=2, showstringspaces=false
+}
+
+% Soporte UTF-8 en listings (español)
+\lstset{
+  literate=
+    {á}{{\'{a}}}1 {é}{{\'{e}}}1 {í}{{\'{i}}}1 {ó}{{\'{o}}}1 {ú}{{\'{u}}}1
+    {Á}{{\'{A}}}1 {É}{{\'{E}}}1 {Í}{{\'{I}}}1 {Ó}{{\'{O}}}1 {Ú}{{\'{U}}}1
+    {ñ}{{\~{n}}}1 {Ñ}{{\~{N}}}1 {ü}{{\"u}}1
+    {¿}{{?`}}1 {¡}{{!`}}1
+}
+
+\newtcolorbox{tipbox}{colback=tipgreen!10,colframe=tipgreen,title=\textbf{Tip},fonttitle=\small\bfseries}
+\newtcolorbox{alertbox}{colback=alertred!10,colframe=alertred,title=\textbf{Ojo},fonttitle=\small\bfseries}
+\newtcolorbox{dominiobox}[1]{colback=tokunavy!5,colframe=tokunavy,title=\textbf{#1},fonttitle=\small\bfseries}
+\newtcolorbox{clbox}{colback=clpurple!8,colframe=clpurple,title=\textbf{Chile},fonttitle=\small\bfseries}
+\newtcolorbox{mxbox}{colback=mxred!8,colframe=mxred,title=\textbf{México},fonttitle=\small\bfseries}
+\newtcolorbox{brbox}{colback=brgreen!8,colframe=brgreen,title=\textbf{Brasil},fonttitle=\small\bfseries}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{tokunavy}{\textbf{Dominio: Pagos Recurrentes}}}
+\rhead{\textcolor{gray}{Preparación Técnica — Toku}}
+\cfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{tokunavy}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{tokunavy} Dominio: Pagos Recurrentes\par}
+  \vspace{0.5cm}
+  {\large\color{gray} El negocio de Toku explicado técnicamente\par}
+  \vspace{0.3cm}
+  \textcolor{tokucyan}{\rule{8cm}{2pt}}
+  \vspace{1.5cm}
+
+  \begin{tcolorbox}[colback=tokunavy!5,colframe=tokunavy,width=11cm]
+    \centering
+    \textbf{Por qué importa:} No puedes diseñar un sistema que no entiendes.\\[4pt]
+    Toku procesa millones de cobros recurrentes en 3 países.\\[4pt]
+    Cada país tiene su propio sistema bancario y regulación.
+  \end{tcolorbox}
+
+  \vspace{1.5cm}
+  \begin{tabular}{ll}
+    \textcolor{tokunavy}{\textbullet} & El modelo de negocio de Toku\\
+    \textcolor{tokunavy}{\textbullet} & Débito directo vs tarjeta\\
+    \textcolor{tokunavy}{\textbullet} & PAC/PAT (Chile), SPEI/CLABE (México), PIX (Brasil)\\
+    \textcolor{tokunavy}{\textbullet} & Flujos de pago completos\\
+    \textcolor{tokunavy}{\textbullet} & Idempotencia y reintentos\\
+    \textcolor{tokunavy}{\textbullet} & La API de Toku desde adentro\\
+  \end{tabular}
+  \vfill
+  {\small\color{gray} Marzo 2026 — Estudio Personal\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─── SECCIÓN 1: QUÉ HACE TOKU ────────────────────────────────────────────────
+\section{¿Qué hace Toku exactamente?}
+
+\begin{dominiobox}{Definición técnica}
+Toku es una \textbf{plataforma de automatización de cobranza recurrente} que permite a
+organizaciones cobrar directamente desde cuentas bancarias o tarjetas de sus clientes,
+de forma automática y recurrente, sin que el pagador tenga que hacer nada.
+\end{dominiobox}
+
+\subsection{El problema que resuelve}
+
+Sin Toku, una organización que cobra mensualmente (un gimnasio, una universidad, una aseguradora)
+tiene que:
+
+\begin{itemize}
+  \item Emitir una boleta/factura manualmente
+  \item Esperar que el cliente pague (transferencia, efectivo, tarjeta)
+  \item Conciliar manualmente quién pagó y quién no
+  \item Llamar a los morosos
+  \item Todo esto tarda días/semanas y tiene alto costo operativo
+\end{itemize}
+
+Con Toku:
+\begin{itemize}
+  \item La organización carga los clientes y deudas vía API o CSV
+  \item Toku cobra automáticamente en la fecha indicada
+  \item El sistema notifica el resultado vía webhook
+  \item La conciliación es automática
+  \item Los reintentos son automáticos
+\end{itemize}
+
+\subsection{Por qué es técnicamente interesante}
+
+\begin{tcolorbox}[colback=tokucyan!5,colframe=tokucyan]
+\textbf{Toku no es un procesador de pagos} (no compite con Stripe o Kushki directamente).
+Es un \textbf{orquestador} de cobros recurrentes que se conecta encima de los sistemas
+bancarios de cada país. Eso es técnicamente complejo porque cada país tiene protocolos
+distintos, regulaciones distintas y APIs bancarias distintas.
+\end{tcolorbox}
+
+\subsection{Su propuesta de valor en números}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Métrica} & \textbf{Sin Toku} & \textbf{Con Toku} \\
+\midrule
+Costo por transacción & Alto (tarjeta ~2-3\%) & Bajo (débito ~0.5-1\%) \\
+Tasa de pago exitoso & 70-80\% & Hasta 95\% \\
+Tiempo de conciliación & Días & Automático \\
+Reintentos manuales & Sí (costoso) & Automático \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─── SECCIÓN 2: DÉBITO DIRECTO ───────────────────────────────────────────────
+\section{Débito Directo vs Cobro con Tarjeta}
+
+\subsection{¿Qué es el débito directo?}
+
+\begin{dominiobox}{Débito directo}
+El cliente autoriza a la organización a cobrar \textbf{directamente de su cuenta bancaria}
+mediante un \textbf{mandato} (también llamado \textit{autorización}, \textit{PAC} en Chile).
+El cobro es pull: la organización "jala" el dinero, sin que el cliente haga nada.
+\end{dominiobox}
+
+\subsection{Ciclo de vida de un mandato de débito directo}
+
+\begin{enumerate}
+  \item \textbf{Autorización}: El cliente firma/acepta el mandato digitalmente o en papel
+  \item \textbf{Registro}: El banco del cliente registra el mandato
+  \item \textbf{Cobro}: La organización envía un lote de cobros al banco
+  \item \textbf{Procesamiento}: El banco verifica fondos y débita
+  \item \textbf{Respuesta}: El banco confirma éxito o reporta error (fondos insuficientes, cuenta cerrada)
+  \item \textbf{Reintento}: Si falla, el sistema puede reintentar automáticamente
+\end{enumerate}
+
+\subsection{Comparación de métodos}
+
+\begin{center}
+\begin{tabular}{p{3cm}p{4cm}p{4cm}p{3cm}}
+\toprule
+\textbf{Aspecto} & \textbf{Débito directo} & \textbf{Tarjeta} & \textbf{Transferencia manual} \\
+\midrule
+Costo & \$\quad (bajo) & \$\$\$ (2-3\%) & \$\quad (bajo) \\
+Fricción para cliente & Autorización única & Nada & Alta (hace la transferencia) \\
+Tasa de éxito & Alta (95\%+) & Media (tarjeta vence) & Baja (olvida pagar) \\
+Riesgo chargeback & Bajo & Alto & Ninguno \\
+Velocidad liquidación & 1-3 días hábiles & Inmediato & Inmediato \\
+Aplica para & Recurrente & Recurrente/único & Único \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─── SECCIÓN 3: SISTEMAS POR PAÍS ────────────────────────────────────────────
+\section{Sistemas de Pago por País}
+
+\begin{clbox}
+\textbf{PAC} = Pago Automático en Cuenta (débito desde cuenta bancaria)\\
+\textbf{PAT} = Pago Automático con Tarjeta (débito desde tarjeta de débito/crédito)
+
+\vspace{6pt}
+\textbf{Cómo funciona PAC en Chile:}
+\begin{enumerate}
+  \item Cliente firma mandato (físico o web)
+  \item Organización registra el mandato en su banco (Banco A)
+  \item El día de cobro, Banco A envía instrucción al Banco B del cliente
+  \item SINACOFI (cámara de compensación) procesa las instrucciones en lotes
+  \item Respuesta al día siguiente hábil (T+1)
+\end{enumerate}
+
+\textbf{Particularidades técnicas:}
+\begin{itemize}
+  \item El cobro es en \textbf{lotes}, no en tiempo real
+  \item Hay cortes horarios (generalmente a las 14:00)
+  \item Los errores llegan al día siguiente
+  \item Número de cuenta + RUT del cliente son los identificadores
+\end{itemize}
+\end{clbox}
+
+\vspace{8pt}
+
+\begin{mxbox}
+\textbf{CLABE} = Clave Bancaria Estandarizada (18 dígitos, identifica banco+sucursal+cuenta)\\
+\textbf{SPEI} = Sistema de Pagos Electrónicos Interbancarios (transferencias en tiempo real)
+
+\vspace{6pt}
+\textbf{Débito en México:}
+\begin{itemize}
+  \item Se llama \textbf{CoDi} (Cobro Digital) o débito domiciliado
+  \item El cliente autoriza vía su banco móvil
+  \item Las instrucciones de cobro van vía CECOBAN (cámara de compensación)
+  \item SPEI para transferencias inmediatas (24/7)
+  \item La CLABE tiene checksum integrado (dígito verificador)
+\end{itemize}
+
+\textbf{Facturación electrónica (SAT):}\\
+En México toda transacción comercial requiere CFDI (factura electrónica). Toku integra esto.
+\end{mxbox}
+
+\vspace{8pt}
+
+\begin{brbox}
+\textbf{PIX} = Sistema de pagos instantáneos del Banco Central de Brasil (BCB)
+
+\vspace{6pt}
+\textbf{Características únicas:}
+\begin{itemize}
+  \item Lanzado en 2020, 24/7/365, respuesta en segundos
+  \item Identificadores: CPF/CNPJ, email, teléfono, o chave aleatória
+  \item \textbf{Pix Automático} (2024): permite débito recurrente vía Pix
+  \item Boleto: método tradicional, vence a los 3 días, pago en efectivo posible
+  \item Débito automático: similar a PAC, requiere autorización con banco
+\end{itemize}
+
+\textbf{Por qué Brasil es complejo:}\\
+Tiene 3 métodos distintos (Pix, Boleto, Débito Automático), cada uno con
+regulación del BCB diferente. Toku tiene que manejar los 3.
+\end{brbox}
+
+% ─── SECCIÓN 4: FLUJOS COMPLETOS ─────────────────────────────────────────────
+\section{Flujos Completos de Pago}
+
+\subsection{Flujo 1: Cobro recurrente exitoso (el happy path)}
+
+\begin{tcolorbox}[colback=tokucyan!5,colframe=tokucyan]
+\begin{enumerate}
+  \item \texttt{POST /customers} → cliente registrado en Toku
+  \item \texttt{POST /subscriptions} → se crea agrupador con product\_id
+  \item \texttt{POST /invoices} → se crea la deuda del mes
+  \item \texttt{POST /transactions} → Toku intenta el cobro
+  \item Toku envía instrucción al sistema bancario
+  \item Sistema bancario responde: éxito
+  \item Toku actualiza invoice → \texttt{estado = 'paid'}
+  \item \texttt{webhook: invoice.paid} → tu sistema actualiza su BD
+  \item \texttt{webhook: transaction.completed} → confirmación final
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Flujo 2: Cobro fallido con reintento automático}
+
+\begin{tcolorbox}[colback=alertred!5,colframe=alertred]
+\begin{enumerate}
+  \item Mismo inicio que Flujo 1...
+  \item Sistema bancario responde: error (fondos insuficientes)
+  \item \texttt{webhook: invoice.failed} → tu sistema recibe la notificación
+  \item Toku espera N horas (configurable)
+  \item \texttt{POST /transactions} (intento 2) → nuevo intento de cobro
+  \item Si falla 5 veces: invoice queda en \texttt{failed}, notificación final
+  \item Tu sistema puede enviar email al cliente para que actualice su info
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Flujo 3: Cliente se inscribe en el portal}
+
+\begin{tcolorbox}[colback=tipgreen!5,colframe=tipgreen]
+\begin{enumerate}
+  \item Tu backend genera checkout session: \texttt{POST /checkout\_sessions}
+  \item Devuelve \texttt{session\_id}
+  \item Frontend muestra el iframe de Toku con ese session\_id
+  \item Cliente ingresa datos bancarios (PAC) o tarjeta
+  \item Toku valida y registra el payment\_method
+  \item \texttt{webhook: payment\_method.created} → tu sistema lo sabe
+  \item Ahora puedes cobrarle automáticamente
+\end{enumerate}
+\end{tcolorbox}
+
+% ─── SECCIÓN 5: IDEMPOTENCIA ─────────────────────────────────────────────────
+\section{Idempotencia — El Concepto más Importante}
+
+\begin{dominiobox}{Definición}
+Una operación es \textbf{idempotente} si ejecutarla múltiples veces produce el mismo resultado
+que ejecutarla una sola vez. En pagos esto es crítico: nunca puedes cobrar dos veces por error.
+\end{dominiobox}
+
+\subsection{¿Por qué pasa?}
+
+\begin{itemize}
+  \item Tu servidor envía la petición, el banco la procesa, pero la respuesta se pierde (timeout)
+  \item Tu sistema no sabe si el cobro ocurrió → reintenta → doble cobro
+  \item El webhook llega dos veces (redes no garantizan entrega única)
+  \item Un worker de jobs ejecuta dos veces la misma tarea
+\end{itemize}
+
+\subsection{Soluciones prácticas}
+
+\begin{lstlisting}[style=python]
+# Patron 1: Idempotency Key en la API
+import httpx
+import uuid
+
+async def crear_transaccion(invoice_id: str, monto: int) -> dict:
+    idempotency_key = f"txn-{invoice_id}"  # determinista, no random!
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://api.trytoku.com/transactions",
+            headers={
+                "Authorization": f"Bearer {API_KEY}",
+                "Idempotency-Key": idempotency_key,  # Toku usa esto
+            },
+            json={"invoice_id": invoice_id, "amount": monto}
+        )
+    # Si se llama dos veces con la misma key, Toku devuelve el mismo resultado
+
+# Patron 2: Chequear estado antes de actuar
+async def procesar_invoice(invoice_id: str):
+    # Primero verificar que no fue procesada ya
+    invoice = await obtener_invoice(invoice_id)
+    if invoice["estado"] != "pending":
+        return  # Ya fue procesada, no hacer nada
+
+    # Patron lock con PostgreSQL (SELECT FOR UPDATE)
+    async with db.transaction():
+        row = await db.fetchrow(
+            "SELECT id FROM invoices WHERE id=$1 AND estado='pending' FOR UPDATE",
+            invoice_id
+        )
+        if not row:
+            return  # Otro proceso la tomó
+        await cobrar_y_actualizar(invoice_id)
+
+# Patron 3: Idempotencia en webhooks
+async def handle_webhook(event: dict):
+    event_id = event["id"]
+
+    # Intentar insertar el event_id
+    resultado = await db.execute(
+        """INSERT INTO webhook_events (event_id, event_type, payload)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (event_id) DO NOTHING""",
+        event_id, event["type"], event
+    )
+    if resultado == "INSERT 0":
+        return  # Duplicado, ignorar
+
+    # Procesar el evento
+    await dispatch_event(event)
+\end{lstlisting}
+
+% ─── SECCIÓN 6: CONCEPTOS CLAVE PARA LA ENTREVISTA ───────────────────────────
+\section{Conceptos Clave que Debes Dominar}
+
+\begin{center}
+\begin{tabular}{p{3.5cm}p{10.5cm}}
+\toprule
+\textbf{Concepto} & \textbf{En el contexto de Toku} \\
+\midrule
+\textbf{Idempotencia} & Nunca cobrar dos veces. Usar idempotency keys en la API. Registrar event\_id en webhooks. \\
+\textbf{Reintentos} & Lógica de backoff exponencial. Máximo N intentos. Notificar si todos fallan. \\
+\textbf{Mandato/Autorización} & El consentimiento del cliente para cobrarle. Sin esto no se puede debitar. \\
+\textbf{Conciliación} & Verificar que lo que Toku dice que cobró coincide con lo que tu sistema registra. \\
+\textbf{Settlement} & Cuando Toku te deposita los fondos cobrados (puede ser D+1, D+2 según banco). \\
+\textbf{Chargeback} & El cliente disputa el cobro con su banco. El banco te devuelve el cargo. \\
+\textbf{Webhook} & Notificación que Toku te envía cuando algo cambia. Tu sistema reacciona a ellos. \\
+\textbf{External ID} & Tu propio ID para sincronizar con tu sistema interno. Evita duplicados. \\
+\textbf{Product ID} & Agrupa facturas del mismo tipo de servicio (ej: "arriendo enero"). \\
+\textbf{Estado de invoice} & pending → paid / failed / void / partially\_paid. Máquina de estados. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Preguntas frecuentes en entrevistas de dominio}
+
+\begin{tcolorbox}[colback=warnambel!5,colframe=warnambel,title=\textbf{Pregunta probable en entrevista}]
+\textit{"¿Cómo manejarías el caso en que Toku te dice que la transacción fue exitosa,
+pero tu base de datos falló al actualizar el estado de la factura?"}
+
+\textbf{Respuesta esperada:}
+\begin{itemize}
+  \item Los webhooks son la red de seguridad: aunque tu UPDATE falle, el webhook llegará
+  \item Diseñar el handler de webhooks para ser idempotente
+  \item Usar transacciones en la BD: UPDATE invoice + INSERT en evento\_log como una sola transacción
+  \item Tener un proceso de reconciliación periódica que compare tu BD con la API de Toku
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=warnambel!5,colframe=warnambel,title=\textbf{Pregunta probable en entrevista}]
+\textit{"¿Cómo diseñarías el sistema de reintentos de cobro?"}
+
+\textbf{Respuesta esperada:}
+\begin{itemize}
+  \item Backoff exponencial: esperar 1h, 4h, 24h entre intentos
+  \item Máximo de intentos configurable (default 5)
+  \item Diferenciar errores retriables (fondos insuficientes) de no retriables (cuenta cerrada)
+  \item Notificar al cliente después de N intentos fallidos
+  \item Job scheduler (Celery/BullMQ) con delay configurable
+\end{itemize}
+\end{tcolorbox}
+
+\end{document}

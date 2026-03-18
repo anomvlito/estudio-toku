@@ -1,0 +1,529 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multicol}
+\usepackage{enumitem}
+
+\definecolor{simred}{RGB}{180,30,40}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{alertred}{RGB}{220,50,50}
+\definecolor{tipgreen}{RGB}{39,174,96}
+\definecolor{warnambel}{RGB}{230,126,34}
+\definecolor{darkgray}{RGB}{50,50,50}
+\definecolor{sqlkw}{RGB}{0,0,200}
+
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{simred}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{simred!40},
+  breaklines=true, tabsize=2, showstringspaces=false
+}
+
+\lstdefinelanguage{SQL2}{
+  keywords={SELECT,FROM,WHERE,INSERT,INTO,VALUES,UPDATE,SET,DELETE,CREATE,TABLE,
+            JOIN,LEFT,GROUP,BY,ORDER,HAVING,LIMIT,WITH,AS,ON,DISTINCT,RETURNING,
+            COUNT,SUM,AVG,NOT,NULL,AND,OR,INNER,OUTER},
+  sensitive=false,
+  morestring=[b]', morecomment=[l]{--}
+}
+
+\lstdefinestyle{sql}{
+  language=SQL2,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{sqlkw}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{sqlkw!20},
+  breaklines=true, tabsize=2, showstringspaces=false
+}
+
+\newtcolorbox{preguntabox}[1]{
+  colback=simred!5, colframe=simred,
+  title={\textbf{#1}}, fonttitle=\small\bfseries,
+  before upper={\setlength{\parskip}{4pt}}
+}
+\newtcolorbox{respuestabox}{
+  colback=tipgreen!8, colframe=tipgreen!60,
+  title={\textbf{Respuesta ideal}}, fonttitle=\small\bfseries
+}
+\newtcolorbox{tipbox}{colback=tipgreen!10,colframe=tipgreen,title=\textbf{Tip estratégico},fonttitle=\small\bfseries}
+\newtcolorbox{alertbox}{colback=alertred!10,colframe=alertred,title=\textbf{Trampa común},fonttitle=\small\bfseries}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{simred}{\textbf{Simulacros de Entrevista}}}
+\rhead{\textcolor{gray}{Preparación Técnica — Toku}}
+\cfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{simred}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{simred} Simulacros de Entrevista\par}
+  \vspace{0.5cm}
+  {\large\color{gray} Toku — Software Engineer 2026\par}
+  \vspace{0.3cm}
+  \textcolor{simred!40}{\rule{8cm}{2pt}}
+  \vspace{1.5cm}
+
+  \begin{tcolorbox}[colback=simred!5,colframe=simred,width=11cm]
+    \centering
+    \textbf{Formato real de entrevistas en startups chilenas tech:}\\[6pt]
+    30 min cultura + motivación\\
+    45-60 min técnico (código en vivo o take-home)\\
+    15 min preguntas del candidato
+  \end{tcolorbox}
+
+  \vspace{1.5cm}
+  \begin{tabular}{ll}
+    \textcolor{simred}{\textbullet} & Preguntas de diseño de sistemas\\
+    \textcolor{simred}{\textbullet} & Coding challenges de pagos\\
+    \textcolor{simred}{\textbullet} & Preguntas de cultura y trade-offs\\
+    \textcolor{simred}{\textbullet} & SQL en vivo\\
+    \textcolor{simred}{\textbullet} & Tus preguntas para ellos (estratégicas)\\
+  \end{tabular}
+  \vfill
+  {\small\color{gray} Marzo 2026 — Estudio Personal\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─── BLOQUE 1: DISEÑO DE SISTEMAS ────────────────────────────────────────────
+\section{Diseño de Sistemas}
+
+\begin{preguntabox}{Pregunta 1 — Sistema de reintentos de cobro}
+\textit{"Tienes que diseñar un sistema que reintente automáticamente los cobros fallidos.
+Un cobro puede fallar por fondos insuficientes (reintentable) o por cuenta cerrada (no reintentable).
+Describe cómo lo diseñarías."}
+\end{preguntabox}
+
+\begin{respuestabox}
+\textbf{Estructura de datos:}
+\begin{lstlisting}[style=sql,numbers=none]
+CREATE TABLE retry_queue (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id UUID NOT NULL REFERENCES invoices(id),
+  intentos INTEGER DEFAULT 0,
+  max_intentos INTEGER DEFAULT 5,
+  proximo_intento TIMESTAMPTZ NOT NULL,
+  error_codigo TEXT,
+  estado TEXT DEFAULT 'pendiente'
+    CHECK (estado IN ('pendiente','procesando','completado','abandonado'))
+);
+\end{lstlisting}
+
+\textbf{Lógica de reintentos:}
+\begin{lstlisting}[style=python,numbers=none]
+ERRORES_NO_RETRIABLES = {"CUENTA_CERRADA", "MANDATO_REVOCADO", "FRAUDE"}
+
+async def procesar_fallo(invoice_id, error_codigo):
+    if error_codigo in ERRORES_NO_RETRIABLES:
+        await marcar_como_fallido_permanente(invoice_id)
+        await notificar_organizacion(invoice_id, "no_retriable")
+        return
+
+    entry = await obtener_retry_entry(invoice_id)
+    if entry["intentos"] >= entry["max_intentos"]:
+        await abandonar(invoice_id)
+        return
+
+    # Backoff exponencial: 1h, 4h, 24h, 48h, 72h
+    horas = [1, 4, 24, 48, 72][entry["intentos"]]
+    proximo = NOW() + INTERVAL f'{horas} hours'
+
+    await actualizar_retry_entry(invoice_id, entry["intentos"]+1, proximo)
+\end{lstlisting}
+
+\textbf{Worker (Celery/cron job):}
+\begin{lstlisting}[style=python,numbers=none]
+# Cada 15 minutos: tomar tareas listas para procesar
+SELECT * FROM retry_queue
+WHERE estado = 'pendiente'
+  AND proximo_intento <= NOW()
+  AND intentos < max_intentos
+FOR UPDATE SKIP LOCKED
+LIMIT 100;
+\end{lstlisting}
+\end{respuestabox}
+
+\begin{tipbox}
+Los entrevistadores buscan: (1) separación de errores retriables vs no retriables,
+(2) backoff exponencial, (3) concurrencia sin doble procesamiento (SKIP LOCKED),
+(4) notificación al fallar definitivamente.
+\end{tipbox}
+
+\vspace{8pt}
+
+\begin{preguntabox}{Pregunta 2 — Diseña el endpoint POST /transactions}
+\textit{"Diseña el endpoint que inicia un cobro. Considera concurrencia, idempotencia y errores."}
+\end{preguntabox}
+
+\begin{respuestabox}
+\begin{lstlisting}[style=python,numbers=none]
+@router.post("/transactions", status_code=201)
+async def crear_transaccion(
+    payload: TransactionCreate,
+    idempotency_key: str = Header(...),  # obligatorio
+    org: dict = Depends(get_current_org),
+    db = Depends(get_db),
+):
+    # 1. Idempotencia: verificar si ya existe con esta key
+    existente = await db.fetchrow(
+        "SELECT * FROM transactions WHERE idempotency_key = $1", idempotency_key
+    )
+    if existente:
+        return dict(existente)  # mismo resultado
+
+    # 2. Verificar que la invoice existe y es 'pending', LOCK para evitar doble cobro
+    async with db.transaction():
+        invoice = await db.fetchrow(
+            "SELECT * FROM invoices WHERE id=$1 AND estado='pending' FOR UPDATE",
+            payload.invoice_id
+        )
+        if not invoice:
+            raise HTTPException(404, "Invoice no encontrada o ya procesada")
+
+        # 3. Insertar la transaccion
+        txn = await db.fetchrow(
+            """INSERT INTO transactions (invoice_id, monto, idempotency_key, estado)
+               VALUES ($1,$2,$3,'pending') RETURNING *""",
+            payload.invoice_id, invoice["monto"], idempotency_key
+        )
+
+    # 4. Enviar al sistema bancario de forma asincrona
+    background_tasks.add_task(procesar_cobro_bancario, str(txn["id"]))
+
+    return dict(txn)
+\end{lstlisting}
+\end{respuestabox}
+
+% ─── BLOQUE 2: CODING CHALLENGES ─────────────────────────────────────────────
+\section{Coding Challenges}
+
+\begin{preguntabox}{Challenge 1 — Procesar CSV de clientes (estilo SFTP de Toku)}
+\textit{Escribe una función que lea un CSV de clientes y los cree en Toku vía API.
+Maneja errores por fila sin abortar todo el proceso. Devuelve un reporte.}
+\end{preguntabox}
+
+\begin{respuestabox}
+\begin{lstlisting}[style=python]
+import csv
+import io
+from dataclasses import dataclass, field
+from typing import List
+
+@dataclass
+class ResultadoImport:
+    exitosos: int = 0
+    fallidos: int = 0
+    errores: List[dict] = field(default_factory=list)
+
+async def importar_clientes_csv(
+    csv_content: str,
+    toku_client,
+) -> ResultadoImport:
+    resultado = ResultadoImport()
+    reader = csv.DictReader(io.StringIO(csv_content))
+
+    for num_fila, fila in enumerate(reader, start=2):  # start=2 por header
+        try:
+            # Validacion basica
+            if not fila.get("email") or not fila.get("nombre"):
+                raise ValueError("email y nombre son obligatorios")
+
+            await toku_client.create_customer({
+                "external_id": fila.get("id"),
+                "nombre": fila["nombre"].strip(),
+                "email": fila["email"].strip().lower(),
+                "telefono": fila.get("telefono", "").strip() or None,
+            })
+            resultado.exitosos += 1
+
+        except Exception as e:
+            resultado.fallidos += 1
+            resultado.errores.append({
+                "fila": num_fila,
+                "datos": fila,
+                "error": str(e)
+            })
+
+    return resultado
+\end{lstlisting}
+\end{respuestabox}
+
+\vspace{8pt}
+
+\begin{preguntabox}{Challenge 2 — Calcular conciliación}
+\textit{Dada una lista de transacciones de tu sistema y una de Toku,
+encuentra las discrepancias (en tu sistema pero no en Toku, y viceversa).}
+\end{preguntabox}
+
+\begin{respuestabox}
+\begin{lstlisting}[style=python]
+from dataclasses import dataclass
+from typing import List, Dict
+
+@dataclass
+class Discrepancia:
+    tipo: str  # 'solo_en_tu_sistema' | 'solo_en_toku' | 'monto_diferente'
+    transaction_id: str
+    detalle: str
+
+def conciliar_transacciones(
+    transacciones_tuyas: List[Dict],
+    transacciones_toku: List[Dict],
+) -> List[Discrepancia]:
+    # Indexar por ID para O(n) en lugar de O(n^2)
+    idx_tuyas = {t["id"]: t for t in transacciones_tuyas}
+    idx_toku = {t["id"]: t for t in transacciones_toku}
+
+    discrepancias = []
+
+    # Transacciones en tu sistema pero no en Toku
+    for tid, txn in idx_tuyas.items():
+        if tid not in idx_toku:
+            discrepancias.append(Discrepancia(
+                tipo="solo_en_tu_sistema",
+                transaction_id=tid,
+                detalle=f"Monto: {txn['monto']}"
+            ))
+        elif abs(txn["monto"] - idx_toku[tid]["monto"]) > 0:
+            discrepancias.append(Discrepancia(
+                tipo="monto_diferente",
+                transaction_id=tid,
+                detalle=f"Tu sistema: {txn['monto']}, Toku: {idx_toku[tid]['monto']}"
+            ))
+
+    # Transacciones en Toku pero no en tu sistema
+    for tid in idx_toku:
+        if tid not in idx_tuyas:
+            discrepancias.append(Discrepancia(
+                tipo="solo_en_toku",
+                transaction_id=tid,
+                detalle=f"Monto: {idx_toku[tid]['monto']}"
+            ))
+
+    return discrepancias
+\end{lstlisting}
+\end{respuestabox}
+
+% ─── BLOQUE 3: SQL EN VIVO ───────────────────────────────────────────────────
+\section{SQL en Vivo}
+
+\begin{preguntabox}{SQL 1 — Tasa de éxito por método de pago}
+\textit{"¿Qué método de pago tiene mejor tasa de éxito en el último trimestre?"}
+\end{preguntabox}
+
+\begin{respuestabox}
+\begin{lstlisting}[style=sql]
+SELECT
+  pm.tipo AS metodo_pago,
+  COUNT(t.id) AS total_intentos,
+  COUNT(t.id) FILTER (WHERE t.estado = 'completed') AS exitosos,
+  ROUND(
+    100.0 * COUNT(t.id) FILTER (WHERE t.estado = 'completed')
+    / NULLIF(COUNT(t.id), 0), 2
+  ) AS tasa_exito_pct
+FROM transactions t
+JOIN payment_methods pm ON pm.id = t.payment_method_id
+WHERE t.created_at >= NOW() - INTERVAL '3 months'
+GROUP BY pm.tipo
+ORDER BY tasa_exito_pct DESC;
+\end{lstlisting}
+\end{respuestabox}
+
+\vspace{6pt}
+
+\begin{preguntabox}{SQL 2 — Clientes que nunca han pagado}
+\textit{"Lista los clientes que tienen facturas pero nunca han completado un pago."}
+\end{preguntabox}
+
+\begin{respuestabox}
+\begin{lstlisting}[style=sql]
+SELECT c.id, c.nombre, c.email, COUNT(i.id) AS facturas_totales
+FROM customers c
+JOIN invoices i ON i.customer_id = c.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM invoices i2
+  JOIN transactions t ON t.invoice_id = i2.id
+  WHERE i2.customer_id = c.id
+    AND t.estado = 'completed'
+)
+GROUP BY c.id, c.nombre, c.email
+ORDER BY facturas_totales DESC;
+\end{lstlisting}
+\end{respuestabox}
+
+% ─── BLOQUE 4: TRADE-OFFS ────────────────────────────────────────────────────
+\section{Preguntas de Trade-offs y Cultura}
+
+\begin{preguntabox}{Trade-off 1 — REST vs Webhooks para notificaciones}
+\textit{"Un cliente te pide que en lugar de webhooks, pueda hacer polling para saber si
+su factura fue pagada. ¿Qué le dices?"}
+\end{preguntabox}
+
+\begin{respuestabox}
+El polling es técnicamente válido pero tiene desventajas claras en este contexto:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Latencia}: el cliente pregunta cada X segundos; el webhook notifica en segundos
+  \item \textbf{Carga}: 1000 clientes haciendo polling = 1000 requests/intervalo aunque no haya cambios
+  \item \textbf{Complejidad}: el cliente necesita implementar el loop, manejar backoff, etc.
+  \item \textbf{Costo}: más requests = más cómputo = más costos para ambos lados
+\end{itemize}
+
+\textbf{Cuándo el polling SÍ tiene sentido:}
+\begin{itemize}[leftmargin=*]
+  \item El cliente no puede exponer un servidor público (detrás de un firewall)
+  \item Solo necesita verificar el estado una vez (no eventos en tiempo real)
+  \item El intervalo de verificación es largo (ej: revisión diaria)
+\end{itemize}
+
+\textbf{Respuesta ideal}: implementar ambos. El endpoint \texttt{GET /invoices/\{id\}} siempre
+disponible para polling ocasional; webhooks para notificaciones en tiempo real.
+\end{respuestabox}
+
+\vspace{8pt}
+
+\begin{preguntabox}{Trade-off 2 — Microservicio vs monolito}
+\textit{"¿Cuándo dividirías un microservicio en dos? ¿Cuál es el costo?"}
+\end{preguntabox}
+
+\begin{respuestabox}
+\textbf{Dividir cuando:}
+\begin{itemize}[leftmargin=*]
+  \item Escalado diferente: el procesador de cobros necesita más CPU que el CRUD de clientes
+  \item Equipos distintos con deploys independientes
+  \item Dominios claramente separados con contratos estables
+  \item Un componente falla frecuentemente y afecta al resto
+\end{itemize}
+
+\textbf{El costo de dividir:}
+\begin{itemize}[leftmargin=*]
+  \item Latencia de red entre servicios (antes era una llamada de función)
+  \item Transacciones distribuidas (ya no puedes hacer BEGIN/COMMIT en una BD)
+  \item Más infraestructura: CI/CD, monitoreo, service discovery
+  \item Complejidad operacional: debugging requiere correlación de logs entre servicios
+\end{itemize}
+
+\textbf{Para Toku en etapa actual}: probablemente empezar con un monolito bien modularizado
+y extraer servicios solo cuando hay un problema concreto de escala o team ownership.
+\end{respuestabox}
+
+% ─── BLOQUE 5: TUS PREGUNTAS ─────────────────────────────────────────────────
+\section{Tus Preguntas para Ellos (Estratégicas)}
+
+\begin{tcolorbox}[colback=simred!5,colframe=simred,title=\textbf{Por qué importa hacer buenas preguntas}]
+Las preguntas que haces revelan cómo piensas. En Toku especialmente valoran gente
+que cuestiona y tiene criterio. No preguntes cosas que puedes googlear.
+\end{tcolorbox}
+
+\subsection{Preguntas sobre el stack y producto}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textit{"La oferta menciona Python/FastAPI y TypeScript/Vue.js — ¿hay servicios en producción
+  donde mezclan ambos en el mismo equipo o están divididos por squad?"}
+
+  \item \textit{"Vi que en 2022 tenían Firestore en el stack y ya no aparece. ¿Qué pasó con eso?
+  ¿Fue una exploración que descartaron o migraron?"}
+
+  \item \textit{"¿Cómo manejan las diferencias regulatorias entre Chile, México y Brasil?
+  ¿Un servicio por país o un sistema genérico con configuración?"}
+
+  \item \textit{"¿Qué pasa en producción cuando el sistema bancario está caído o lento?
+  ¿Tienen circuit breakers implementados?"}
+\end{enumerate}
+
+\subsection{Preguntas sobre el equipo y trabajo}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textit{"¿Cómo está estructurado el equipo de engineering? ¿Hay squads por producto
+  o por capa técnica (frontend, backend, infra)?"}
+
+  \item \textit{"¿Cuál fue el incidente de producción más difícil que tuvieron el último año
+  y qué aprendieron de él?"}
+
+  \item \textit{"¿Cómo es el proceso de code review? ¿Hay un estándar de cuánto tiempo
+  puede estar un PR esperando revisión?"}
+
+  \item \textit{"La oferta dice que buscan para el rol de Integrations Engineer alguien
+  que quiera crecer hacia liderazgo técnico. ¿Cómo se ve ese camino en Toku concretamente?"}
+\end{enumerate}
+
+\subsection{Pregunta de cierre (poderosa)}
+
+\begin{tcolorbox}[colback=tipgreen!8,colframe=tipgreen]
+\textit{"¿Cuál es el mayor desafío técnico no resuelto que tiene el equipo hoy?
+¿En qué área un nuevo SE podría tener mayor impacto en los primeros 6 meses?"}
+
+Esta pregunta demuestra: orientación a impacto, que piensas en la empresa (no solo en ti),
+y te da información real sobre qué van a pedirte hacer.
+\end{tcolorbox}
+
+% ─── RESUMEN FINAL ───────────────────────────────────────────────────────────
+\newpage
+\section{Guía Rápida: Día de la Entrevista}
+
+\begin{multicols}{2}
+
+\textbf{\textcolor{simred}{Los 5 conceptos más preguntados}}
+\begin{enumerate}[leftmargin=*,noitemsep]
+  \item Idempotencia (siempre)
+  \item SELECT FOR UPDATE / bloqueo de filas
+  \item Backoff exponencial en reintentos
+  \item Verificación HMAC en webhooks
+  \item Trade-off: cuándo usar cada tecnología
+\end{enumerate}
+
+\textbf{\textcolor{simred}{Frases que resuenan en Toku}}
+\begin{itemize}[leftmargin=*,noitemsep]
+  \item "El trade-off que veo es..."
+  \item "Para garantizar idempotencia haría..."
+  \item "En producción esto podría fallar si..."
+  \item "Dependería del volumen / la frecuencia / el SLA"
+  \item "Empezaría simple y lo extraería cuando..."
+\end{itemize}
+
+\columnbreak
+
+\textbf{\textcolor{simred}{Lo que NO hacer}}
+\begin{itemize}[leftmargin=*,noitemsep]
+  \item Dar la respuesta sin razonar el camino
+  \item Decir "siempre uso microservicios" (oversimplificado)
+  \item No preguntar nada al final
+  \item Ignorar los edge cases (doble cobro, timeout, red caída)
+  \item Decir "no sé" sin intentar razonar
+\end{itemize}
+
+\textbf{\textcolor{simred}{Si no sabes algo}}
+\begin{tcolorbox}[colback=tipgreen!8,colframe=tipgreen]
+"No lo tengo claro, pero lo abordaría así:
+[razonar en voz alta]. ¿Eso es lo que buscan
+o hay algo que me estoy perdiendo?"
+\end{tcolorbox}
+
+\end{multicols}
+
+\end{document}

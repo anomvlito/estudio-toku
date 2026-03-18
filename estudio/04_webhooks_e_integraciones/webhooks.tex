@@ -1,0 +1,590 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multicol}
+
+\definecolor{hookpurple}{RGB}{90,50,150}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{alertred}{RGB}{220,50,50}
+\definecolor{tipgreen}{RGB}{39,174,96}
+\definecolor{warnambel}{RGB}{230,126,34}
+\definecolor{darkgray}{RGB}{50,50,50}
+
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{hookpurple}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{hookpurple!40},
+  breaklines=true, tabsize=2, showstringspaces=false
+}
+
+\lstdefinestyle{shell}{
+  language=bash,
+  backgroundcolor=\color{darkgray},
+  basicstyle=\ttfamily\small\color{white},
+  keywordstyle=\color{yellow}\bfseries,
+  numbers=none,
+  frame=none,
+  breaklines=true, tabsize=2
+}
+
+% Soporte UTF-8 en listings (español)
+\lstset{
+  literate=
+    {á}{{\'{a}}}1 {é}{{\'{e}}}1 {í}{{\'{i}}}1 {ó}{{\'{o}}}1 {ú}{{\'{u}}}1
+    {Á}{{\'{A}}}1 {É}{{\'{E}}}1 {Í}{{\'{I}}}1 {Ó}{{\'{O}}}1 {Ú}{{\'{U}}}1
+    {ñ}{{\~{n}}}1 {Ñ}{{\~{N}}}1 {ü}{{\"u}}1
+    {¿}{{?`}}1 {¡}{{!`}}1
+}
+
+\newtcolorbox{tipbox}{colback=tipgreen!10,colframe=tipgreen,title=\textbf{Tip},fonttitle=\small\bfseries}
+\newtcolorbox{alertbox}{colback=alertred!10,colframe=alertred,title=\textbf{Crítico},fonttitle=\small\bfseries}
+\newtcolorbox{ejerciciobox}[1]{colback=warnambel!8,colframe=warnambel,title=\textbf{Ejercicio #1},fonttitle=\small\bfseries}
+\newtcolorbox{solucionbox}[1]{colback=tipgreen!8,colframe=tipgreen!60,title=\textbf{Solución #1},fonttitle=\small\bfseries}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{hookpurple}{\textbf{Webhooks e Integraciones}}}
+\rhead{\textcolor{gray}{Preparación Técnica — Toku}}
+\cfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{hookpurple}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{hookpurple} Webhooks e Integraciones\par}
+  \vspace{0.5cm}
+  {\large\color{gray} Diseño robusto de sistemas de notificación y APIs\par}
+  \vspace{0.3cm}
+  \textcolor{hookpurple!40}{\rule{8cm}{2pt}}
+  \vspace{1.5cm}
+
+  \begin{tcolorbox}[colback=hookpurple!5,colframe=hookpurple,width=11cm]
+    \centering
+    \textbf{Foco:} Lo que el rol de Integrations Engineer exige\\[4pt]
+    HMAC, idempotencia, retries, async processing, OAuth 2.0
+  \end{tcolorbox}
+
+  \vspace{1.5cm}
+  \begin{tabular}{ll}
+    \textcolor{hookpurple}{\textbullet} & Diseño de webhooks robustos\\
+    \textcolor{hookpurple}{\textbullet} & Verificación HMAC-SHA256\\
+    \textcolor{hookpurple}{\textbullet} & Procesamiento asíncrono con colas\\
+    \textcolor{hookpurple}{\textbullet} & OAuth 2.0 y autenticación de APIs\\
+    \textcolor{hookpurple}{\textbullet} & Manejo de reintentos y backoff\\
+    \textcolor{hookpurple}{\textbullet} & Integración con ERPs y sistemas externos\\
+  \end{tabular}
+  \vfill
+  {\small\color{gray} Marzo 2026 — Estudio Personal\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─── SECCIÓN 1: WEBHOOKS ─────────────────────────────────────────────────────
+\section{Webhooks: Diseño Robusto}
+
+\begin{tcolorbox}[colback=hookpurple!5,colframe=hookpurple]
+Un webhook es un \textbf{HTTP POST que un sistema envía a tu servidor} cuando algo ocurre.
+Es la diferencia entre \textit{polling} (preguntar "¿pasó algo?") y \textit{push} (te aviso cuando pasa).
+Toku usa webhooks para notificarte de pagos, errores, nuevos payment methods, etc.
+\end{tcolorbox}
+
+\subsection{Las 5 Reglas de Oro de los Webhooks}
+
+\begin{enumerate}
+  \item \textbf{Responde 200 inmediatamente} — no proceses en el handler, solo acepta y encola
+  \item \textbf{Verifica la firma siempre} — cualquier request puede llegar a tu endpoint
+  \item \textbf{Sé idempotente} — el mismo evento puede llegar más de una vez
+  \item \textbf{Loggea todo} — en pagos, el debugging depende de los logs
+  \item \textbf{Usa HTTPS} — nunca HTTP para webhooks de pagos
+\end{enumerate}
+
+\subsection{Implementación completa con FastAPI}
+
+\begin{lstlisting}[style=python]
+# webhooks/router.py
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse
+import hmac
+import hashlib
+import logging
+from datetime import datetime
+
+from database import db
+from tasks import procesar_evento_pago
+
+router = APIRouter(prefix="/webhooks", tags=["webhooks"])
+logger = logging.getLogger(__name__)
+
+WEBHOOK_SECRET = "tu_secreto_toku"
+
+def verificar_firma(body: bytes, signature: str) -> bool:
+    """HMAC-SHA256: verificar que el request viene de Toku"""
+    expected = hmac.new(
+        WEBHOOK_SECRET.encode("utf-8"),
+        body,
+        hashlib.sha256
+    ).hexdigest()
+    # compare_digest evita timing attacks
+    return hmac.compare_digest(expected, signature)
+
+@router.post("/toku")
+async def recibir_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks
+):
+    # 1. Obtener body raw (importante: ANTES de parsear JSON)
+    body = await request.body()
+    signature = request.headers.get("X-Toku-Signature", "")
+
+    # 2. Verificar firma
+    if not verificar_firma(body, signature):
+        logger.warning("Firma invalida recibida en webhook")
+        raise HTTPException(status_code=401, detail="Firma invalida")
+
+    # 3. Parsear evento
+    evento = await request.json()
+    event_id = evento.get("id")
+    event_type = evento.get("type")
+
+    logger.info(f"Webhook recibido: {event_type} | {event_id}")
+
+    # 4. Idempotencia: registrar el event_id
+    insertado = await db.execute(
+        """INSERT INTO webhook_events (event_id, event_type, payload)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (event_id) DO NOTHING""",
+        event_id, event_type, evento
+    )
+
+    if insertado == "INSERT 0 0":
+        # Duplicado: ya fue procesado
+        logger.info(f"Evento duplicado ignorado: {event_id}")
+        return JSONResponse({"status": "duplicate"})
+
+    # 5. Encolar procesamiento asíncrono (background task)
+    background_tasks.add_task(procesar_evento_pago, evento)
+
+    # 6. Responder 200 inmediatamente (no esperar procesamiento)
+    return JSONResponse({"status": "received"})
+\end{lstlisting}
+
+\begin{lstlisting}[style=python]
+# tasks/payment_tasks.py
+from database import db
+import logging
+
+logger = logging.getLogger(__name__)
+
+async def procesar_evento_pago(evento: dict):
+    """Procesamiento real del evento (fuera del request HTTP)"""
+    event_type = evento["type"]
+    data = evento["data"]
+
+    try:
+        if event_type == "invoice.paid":
+            await manejar_pago_exitoso(data)
+        elif event_type == "invoice.failed":
+            await manejar_pago_fallido(data)
+        elif event_type == "payment_method.created":
+            await manejar_nuevo_metodo_pago(data)
+        elif event_type == "transaction.completed":
+            await manejar_transaccion_completada(data)
+
+        # Marcar como procesado
+        await db.execute(
+            "UPDATE webhook_events SET estado='completado', procesado_at=NOW() WHERE event_id=$1",
+            evento["id"]
+        )
+    except Exception as e:
+        logger.error(f"Error procesando evento {evento['id']}: {e}")
+        await db.execute(
+            "UPDATE webhook_events SET estado='error', error_detalle=$1 WHERE event_id=$2",
+            str(e), evento["id"]
+        )
+        raise  # Para que el retry system lo capture
+
+async def manejar_pago_exitoso(data: dict):
+    invoice_id = data["invoice_id"]
+    transaction_id = data["transaction_id"]
+    monto = data["amount"]
+
+    async with db.transaction():
+        # Actualizar factura
+        rows = await db.execute(
+            """UPDATE invoices
+               SET estado='paid', pagada_at=NOW(), updated_at=NOW()
+               WHERE id=$1 AND estado='pending'""",
+            invoice_id
+        )
+        if rows == "UPDATE 0":
+            logger.warning(f"Invoice {invoice_id} no estaba pending")
+            return  # Idempotente: si ya fue pagada, OK
+
+        # Registrar el pago en tu sistema
+        await db.execute(
+            "INSERT INTO pagos_confirmados (invoice_id, transaction_id, monto) VALUES ($1,$2,$3)",
+            invoice_id, transaction_id, monto
+        )
+
+    logger.info(f"Pago exitoso procesado: {invoice_id}")
+\end{lstlisting}
+
+% ─── SECCIÓN 2: AUTENTICACIÓN DE APIs ────────────────────────────────────────
+\section{Autenticación de APIs Externas}
+
+\subsection{API Keys (el más simple)}
+
+\begin{lstlisting}[style=python]
+import httpx
+import os
+
+# NUNCA hardcodear
+TOKU_API_KEY = os.environ["TOKU_API_KEY"]
+
+async def llamar_toku_api(endpoint: str, payload: dict) -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"https://api.trytoku.com{endpoint}",
+            headers={
+                "Authorization": f"Bearer {TOKU_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=30.0
+        )
+        response.raise_for_status()
+        return response.json()
+\end{lstlisting}
+
+\subsection{OAuth 2.0 — El Estándar de Integraciones}
+
+\begin{tcolorbox}[colback=hookpurple!5,colframe=hookpurple,title=\textbf{¿Cuándo aparece OAuth 2.0 en Toku?}]
+Cuando Toku se integra con el sistema del cliente (ERP, CRM),
+a veces ese sistema externo requiere OAuth 2.0 para autorizar el acceso.
+El rol de Integrations Engineer tiene que manejar esto.
+\end{tcolorbox}
+
+\begin{lstlisting}[style=python]
+# Flujo Client Credentials (machine-to-machine, el mas comun en integraciones)
+import httpx
+import time
+
+class OAuthClient:
+    def __init__(self, client_id: str, client_secret: str, token_url: str):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.token_url = token_url
+        self._token = None
+        self._token_expiry = 0
+
+    async def get_token(self) -> str:
+        """Obtener token, renovando si expiró"""
+        now = time.time()
+        if self._token and now < self._token_expiry - 60:  # 60s buffer
+            return self._token
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self.token_url,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                    "scope": "read:pagos write:pagos"
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+
+        self._token = data["access_token"]
+        self._token_expiry = now + data["expires_in"]
+        return self._token
+
+    async def get(self, url: str) -> dict:
+        token = await self.get_token()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url,
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            response.raise_for_status()
+            return response.json()
+\end{lstlisting}
+
+\subsection{JWT — Verificación de Tokens}
+
+\begin{lstlisting}[style=python]
+import jwt
+from datetime import datetime, timedelta
+
+SECRET_KEY = "tu_secreto_jwt"
+ALGORITHM = "HS256"
+
+def crear_token(user_id: str, expiry_hours: int = 24) -> str:
+    payload = {
+        "sub": user_id,
+        "iat": datetime.utcnow(),
+        "exp": datetime.utcnow() + timedelta(hours=expiry_hours)
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def verificar_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Token expirado")
+    except jwt.InvalidTokenError:
+        raise ValueError("Token invalido")
+\end{lstlisting}
+
+% ─── SECCIÓN 3: REINTENTOS Y RESILIENCIA ─────────────────────────────────────
+\section{Reintentos, Backoff y Resiliencia}
+
+\subsection{Backoff Exponencial con Jitter}
+
+\begin{lstlisting}[style=python]
+import asyncio
+import random
+from typing import Callable, TypeVar, Any
+
+T = TypeVar("T")
+
+async def con_reintentos(
+    fn: Callable[..., Any],
+    max_intentos: int = 5,
+    base_delay: float = 1.0,
+    max_delay: float = 60.0,
+    *args,
+    **kwargs
+):
+    """
+    Reintenta una funcion con backoff exponencial + jitter.
+    Jitter = aleatoriedad para evitar thundering herd
+    (todos los clientes reintentando al mismo tiempo)
+    """
+    for intento in range(max_intentos):
+        try:
+            return await fn(*args, **kwargs)
+        except Exception as e:
+            if intento == max_intentos - 1:
+                raise  # Ultimo intento: propagar el error
+
+            # Backoff: 1s, 2s, 4s, 8s, 16s...
+            delay = min(base_delay * (2 ** intento), max_delay)
+            # Jitter: +-20% del delay para desincronizar clientes
+            jitter = delay * random.uniform(-0.2, 0.2)
+            espera = delay + jitter
+
+            print(f"Intento {intento+1} fallido. Reintentando en {espera:.1f}s")
+            await asyncio.sleep(espera)
+
+# Uso:
+resultado = await con_reintentos(
+    llamar_toku_api,
+    max_intentos=3,
+    args=("/transactions",),
+    kwargs={"payload": {...}}
+)
+\end{lstlisting}
+
+\subsection{Circuit Breaker — No machucar un servicio caído}
+
+\begin{lstlisting}[style=python]
+from enum import Enum
+import time
+
+class Estado(Enum):
+    CERRADO = "closed"    # Normal: deja pasar requests
+    ABIERTO = "open"      # Falla: bloquea todos los requests
+    SEMI_ABIERTO = "half_open"  # Probando si se recupero
+
+class CircuitBreaker:
+    def __init__(self, umbral_fallas: int = 5, timeout: float = 60.0):
+        self.umbral = umbral_fallas
+        self.timeout = timeout
+        self.fallas = 0
+        self.ultimo_fallo = None
+        self.estado = Estado.CERRADO
+
+    async def llamar(self, fn, *args, **kwargs):
+        if self.estado == Estado.ABIERTO:
+            if time.time() - self.ultimo_fallo > self.timeout:
+                self.estado = Estado.SEMI_ABIERTO
+            else:
+                raise Exception("Circuit breaker abierto: servicio no disponible")
+
+        try:
+            resultado = await fn(*args, **kwargs)
+            self._exito()
+            return resultado
+        except Exception as e:
+            self._fallo()
+            raise
+
+    def _exito(self):
+        self.fallas = 0
+        self.estado = Estado.CERRADO
+
+    def _fallo(self):
+        self.fallas += 1
+        self.ultimo_fallo = time.time()
+        if self.fallas >= self.umbral:
+            self.estado = Estado.ABIERTO
+\end{lstlisting}
+
+% ─── SECCIÓN 4: INTEGRACIÓN CON ERP/SISTEMAS EXTERNOS ────────────────────────
+\section{Integración con ERP y Sistemas Externos}
+
+\begin{tcolorbox}[colback=warnambel!5,colframe=warnambel,title=\textbf{El desafío del rol de Integrations Engineer}]
+Los clientes de Toku tienen sus propios sistemas (SAP, Salesforce, sistemas legacy en COBOL,
+bases de datos Oracle...). El trabajo es conectar ese sistema con la API de Toku de forma
+que el flujo de datos sea confiable, sin duplicados y fácil de operar.
+\end{tcolorbox}
+
+\subsection{Patron: Sync bidireccional confiable}
+
+\begin{lstlisting}[style=python]
+# Patron: cursor de sincronizacion
+# En lugar de sincronizar TODO siempre, solo sincronizar LO NUEVO
+
+async def sync_clientes_desde_erp(erp_client, toku_client, db):
+    """Sincronizar clientes nuevos/actualizados desde ERP a Toku"""
+
+    # Obtener ultimo cursor (timestamp de la ultima sync exitosa)
+    cursor = await db.fetchval(
+        "SELECT MAX(ultima_sync) FROM sync_state WHERE entidad='customers'"
+    ) or "2000-01-01T00:00:00Z"
+
+    # Pedir al ERP solo lo que cambio desde el cursor
+    clientes_nuevos = await erp_client.get_customers_since(cursor)
+
+    exitosos = 0
+    fallidos = 0
+
+    for cliente in clientes_nuevos:
+        try:
+            # Verificar si ya existe en Toku (por external_id)
+            existente = await toku_client.get_customer_by_external_id(
+                cliente["id_erp"]
+            )
+
+            if existente:
+                # Actualizar
+                await toku_client.update_customer(existente["id"], {
+                    "nombre": cliente["nombre"],
+                    "email": cliente["email"]
+                })
+            else:
+                # Crear nuevo
+                await toku_client.create_customer({
+                    "external_id": cliente["id_erp"],
+                    "nombre": cliente["nombre"],
+                    "email": cliente["email"],
+                    "telefono": cliente.get("telefono")
+                })
+
+            exitosos += 1
+
+        except Exception as e:
+            # Loggear y continuar (no abortar toda la sync por un error)
+            logger.error(f"Error sincronizando cliente {cliente['id_erp']}: {e}")
+            fallidos += 1
+
+    # Actualizar cursor solo si terminamos bien
+    await db.execute(
+        """INSERT INTO sync_state (entidad, ultima_sync)
+           VALUES ('customers', NOW())
+           ON CONFLICT (entidad) DO UPDATE SET ultima_sync = NOW()"""
+    )
+
+    logger.info(f"Sync completada: {exitosos} ok, {fallidos} fallidos")
+\end{lstlisting}
+
+\subsection{Trade-off: API REST vs SFTP vs Low-Code}
+
+\begin{center}
+\begin{tabular}{p{3cm}p{4cm}p{4cm}p{3cm}}
+\toprule
+\textbf{Método} & \textbf{Cuándo usar} & \textbf{Ventajas} & \textbf{Desventajas} \\
+\midrule
+API REST custom & Tiempo real, sistema moderno & Control total, inmediato & Más desarrollo \\
+SFTP + CSV & Batch diario, sistema legacy & Simple, sin cambios en ERP & Latencia de 24h \\
+Workato/Tray & Integraciones estándar (Salesforce, SAP) & Rápido de implementar & Costo, límite de complejidad \\
+Webhook listener & Reaccionar a eventos de Toku & Eficiente, push & Tu servidor debe estar disponible \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Cheatsheet: Lo Esencial en una Página}
+
+\begin{multicols}{2}
+\textbf{\textcolor{hookpurple}{HMAC-SHA256}}
+\begin{lstlisting}[style=python,numbers=none]
+import hmac, hashlib
+expected = hmac.new(
+    secret.encode(),
+    raw_body,
+    hashlib.sha256
+).hexdigest()
+hmac.compare_digest(expected, sig)
+\end{lstlisting}
+
+\textbf{\textcolor{hookpurple}{Idempotencia en webhook}}
+\begin{lstlisting}[style=python,numbers=none]
+INSERT INTO events (event_id, ...)
+ON CONFLICT (event_id) DO NOTHING;
+-- rowcount == 0 -> duplicado
+\end{lstlisting}
+
+\textbf{\textcolor{hookpurple}{Backoff exponencial}}
+\begin{lstlisting}[style=python,numbers=none]
+delay = min(base * 2**intento, max_d)
+jitter = delay * random.uniform(-.2,.2)
+await asyncio.sleep(delay + jitter)
+\end{lstlisting}
+
+\columnbreak
+
+\textbf{\textcolor{hookpurple}{OAuth2 Client Credentials}}
+\begin{lstlisting}[style=python,numbers=none]
+POST /token
+  grant_type=client_credentials
+  client_id=...
+  client_secret=...
+# -> access_token, expires_in
+\end{lstlisting}
+
+\textbf{\textcolor{hookpurple}{Eventos Toku clave}}
+\begin{lstlisting}[style=python,numbers=none]
+invoice.paid       -> marcar pagado
+invoice.failed     -> notificar, retry
+payment_method.created -> cobro futuro
+transaction.completed  -> confirmacion
+settlement.created     -> fondos listos
+\end{lstlisting}
+\end{multicols}
+
+\end{document}

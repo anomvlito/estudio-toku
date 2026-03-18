@@ -1,0 +1,848 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multicol}
+\usepackage{amssymb}
+
+% Colores
+\definecolor{pyblue}{RGB}{53,114,165}
+\definecolor{tsblue}{RGB}{0,122,204}
+\definecolor{vuegreen}{RGB}{66,184,131}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{alertred}{RGB}{220,50,50}
+\definecolor{tipgreen}{RGB}{39,174,96}
+\definecolor{warnambel}{RGB}{230,126,34}
+\definecolor{darkgray}{RGB}{50,50,50}
+
+% Listings Python
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{pyblue}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{pyblue!40},
+  breaklines=true, tabsize=2,
+  showstringspaces=false,
+  morekeywords={async,await,def,class,from,import,as,TypeVar,Generic,Optional,Union,List,Dict}
+}
+
+% Listings TypeScript
+\lstdefinestyle{typescript}{
+  language=Java,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{tsblue}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{tsblue!40},
+  breaklines=true, tabsize=2,
+  showstringspaces=false,
+  morekeywords={interface,type,string,number,boolean,void,any,never,readonly,
+                const,let,async,await,export,import,from,extends,implements,
+                ref,reactive,computed,watch,onMounted,defineComponent,Ref,
+                Promise,Record,Partial,Required,Pick,Omit,Array,Generic}
+}
+
+% Cajas
+\newtcolorbox{tipbox}{colback=tipgreen!10,colframe=tipgreen,title=\textbf{Tip},fonttitle=\small\bfseries}
+\newtcolorbox{alertbox}{colback=alertred!10,colframe=alertred,title=\textbf{Ojo},fonttitle=\small\bfseries}
+\newtcolorbox{pybox}{colback=pyblue!8,colframe=pyblue,title=\textbf{Python},fonttitle=\small\bfseries}
+\newtcolorbox{tsbox}{colback=tsblue!8,colframe=tsblue,title=\textbf{TypeScript},fonttitle=\small\bfseries}
+\newtcolorbox{vuebox}{colback=vuegreen!10,colframe=vuegreen,title=\textbf{Vue.js},fonttitle=\small\bfseries}
+\newtcolorbox{ejerciciobox}[1]{colback=warnambel!8,colframe=warnambel,title=\textbf{Ejercicio #1},fonttitle=\small\bfseries}
+\newtcolorbox{solucionbox}[1]{colback=tipgreen!8,colframe=tipgreen!60,title=\textbf{Solución #1},fonttitle=\small\bfseries}
+
+% Headers
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{tsblue}{\textbf{TypeScript para Pythonistas}}}
+\rhead{\textcolor{gray}{Preparación Técnica — Toku}}
+\cfoot{\thepage}
+
+% Secciones en color
+\titleformat{\section}{\large\bfseries\color{tsblue}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+\begin{document}
+
+% ─── PORTADA ─────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{tsblue} TypeScript para Pythonistas\par}
+  \vspace{0.5cm}
+  {\large\color{gray} Preparación Técnica — Toku\par}
+  \vspace{0.3cm}
+  \textcolor{vuegreen}{\rule{8cm}{2pt}}
+  \vspace{1cm}
+
+  \begin{tcolorbox}[colback=tsblue!5,colframe=tsblue,width=10cm]
+    \centering
+    \textbf{Stack objetivo:} \texttt{TypeScript + Vue.js + FastAPI}\\[4pt]
+    \textbf{Foco:} Entender TS viniendo de Python\\[4pt]
+    \textbf{Nivel:} Intermedio Python → Básico-Intermedio TS
+  \end{tcolorbox}
+
+  \vspace{1.5cm}
+  {\large Temas\par}
+  \vspace{0.3cm}
+  \begin{tabular}{ll}
+    \textcolor{tsblue}{\textbullet} & Tipado estático y estructural\\
+    \textcolor{tsblue}{\textbullet} & Funciones y arrow functions\\
+    \textcolor{tsblue}{\textbullet} & Async/Await y Promises\\
+    \textcolor{tsblue}{\textbullet} & Generics\\
+    \textcolor{tsblue}{\textbullet} & Módulos e imports\\
+    \textcolor{vuegreen}{\textbullet} & Vue.js Composition API\\
+    \textcolor{warnambel}{\textbullet} & 5 Ejercicios con soluciones\\
+  \end{tabular}
+
+  \vfill
+  {\small\color{gray} Marzo 2026 — Estudio Personal\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─── SECCIÓN 1: TIPADO ───────────────────────────────────────────────────────
+\section{Tipado: De Python a TypeScript}
+
+\subsection{Tipos primitivos}
+
+\begin{tcolorbox}[colback=gray!5,colframe=gray,title=La idea clave]
+Python tiene \textbf{type hints} opcionales (\texttt{int}, \texttt{str}...). TypeScript tiene tipado \textbf{estático obligatorio}
+(en la práctica). Si no pones tipo, TS infiere; si infiere \texttt{any}, es una señal de alerta.
+\end{tcolorbox}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+# Python
+nombre: str = "Fabian"
+edad: int = 25
+precio: float = 9990.0
+activo: bool = True
+nada: None = None
+cualquier_cosa: any = 42   # evitar
+\end{lstlisting}
+\end{pybox}
+
+\begin{tsbox}
+\begin{lstlisting}[style=typescript]
+// TypeScript
+const nombre: string = "Fabian";
+const edad: number = 25;        // number = int y float
+const precio: number = 9990.0;
+const activo: boolean = true;
+const nada: null = null;
+const indefinido: undefined = undefined;
+let cualquier_cosa: any = 42;   // evitar: apaga el tipado
+\end{lstlisting}
+\end{tsbox}
+
+\begin{alertbox}
+En TS \texttt{number} cubre tanto enteros como flotantes (no hay \texttt{int} y \texttt{float} separados).
+\end{alertbox}
+
+\subsection{Interfaces y Types}
+
+Equivalente a las \texttt{dataclass} o \texttt{TypedDict} de Python:
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from dataclasses import dataclass
+from typing import TypedDict, Optional
+
+@dataclass
+class Cliente:
+    id: str
+    nombre: str
+    email: str
+    telefono: Optional[str] = None
+
+class ClienteDict(TypedDict):
+    id: str
+    nombre: str
+    email: str
+\end{lstlisting}
+\end{pybox}
+
+\begin{tsbox}
+\begin{lstlisting}[style=typescript]
+// Interface (preferido para objetos/formas)
+interface Cliente {
+  id: string;
+  nombre: string;
+  email: string;
+  telefono?: string;    // ? = opcional (equivale a Optional[str])
+  readonly createdAt: Date; // readonly = no mutable
+}
+
+// Type alias (mas flexible, puede ser union/intersection)
+type Estado = "activo" | "inactivo" | "pendiente"; // union literal
+
+type ClienteResumen = Pick<Cliente, "id" | "nombre">; // solo esos campos
+type ClienteParcial = Partial<Cliente>;               // todos opcionales
+\end{lstlisting}
+\end{tsbox}
+
+\begin{tipbox}
+\textbf{interface vs type}: Usa \texttt{interface} para describir objetos y clases.
+Usa \texttt{type} para uniones, intersecciones y alias de tipos complejos.
+En la práctica son muy similares para casos simples.
+\end{tipbox}
+
+\subsection{Union e Intersection}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from typing import Union
+
+def procesar(valor: Union[str, int]) -> str:
+    return str(valor)
+
+# Python 3.10+
+def procesar(valor: str | int) -> str:
+    return str(valor)
+\end{lstlisting}
+\end{pybox}
+
+\begin{tsbox}
+\begin{lstlisting}[style=typescript]
+// Union: puede ser uno U otro
+type IdOrName = string | number;
+
+function procesar(valor: string | number): string {
+  return String(valor);
+}
+
+// Intersection: debe cumplir ambos
+interface Timestamps { createdAt: Date; updatedAt: Date; }
+interface ClienteBase { id: string; nombre: string; }
+
+type ClienteCompleto = ClienteBase & Timestamps;
+// ahora necesita id, nombre, createdAt Y updatedAt
+\end{lstlisting}
+\end{tsbox}
+
+% ─── SECCIÓN 2: FUNCIONES ────────────────────────────────────────────────────
+\section{Funciones y Arrow Functions}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+# Funcion normal
+def saludar(nombre: str, saludo: str = "Hola") -> str:
+    return f"{saludo}, {nombre}!"
+
+# Lambda
+cuadrado = lambda x: x ** 2
+
+# Funcion que recibe funcion
+def aplicar(fn: callable, valor: int) -> int:
+    return fn(valor)
+\end{lstlisting}
+\end{pybox}
+
+\begin{tsbox}
+\begin{lstlisting}[style=typescript]
+// Funcion normal (tipada)
+function saludar(nombre: string, saludo: string = "Hola"): string {
+  return `${saludo}, ${nombre}!`;  // template literals con backtick
+}
+
+// Arrow function (equivale a lambda pero mas poderosa)
+const cuadrado = (x: number): number => x ** 2;
+
+// Arrow sin llaves = return implicito (solo expresiones simples)
+const doble = (x: number) => x * 2;
+
+// Tipo de una funcion
+type Transformador = (valor: number) => number;
+const aplicar = (fn: Transformador, valor: number): number => fn(valor);
+
+// Parametros rest (equivale a *args)
+const sumar = (...numeros: number[]): number =>
+  numeros.reduce((acc, n) => acc + n, 0);
+\end{lstlisting}
+\end{tsbox}
+
+\begin{tipbox}
+Las arrow functions en TS/JS tienen una diferencia crucial con \texttt{def}: el valor de
+\texttt{this} es léxico (del contexto donde se define). Esto importa en Vue.js y clases.
+\end{tipbox}
+
+% ─── SECCIÓN 3: ASYNC/AWAIT ──────────────────────────────────────────────────
+\section{Async/Await y Promises}
+
+\subsection{Comparación directa}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+import asyncio
+import httpx
+
+async def obtener_cliente(id: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"/customers/{id}")
+        return response.json()
+
+async def main():
+    cliente = await obtener_cliente("cust_123")
+    print(cliente["nombre"])
+
+asyncio.run(main())
+\end{lstlisting}
+\end{pybox}
+
+\begin{tsbox}
+\begin{lstlisting}[style=typescript]
+// Promise<T> = equivale a Coroutine/Awaitable en Python
+async function obtenerCliente(id: string): Promise<Cliente> {
+  const response = await fetch(`/customers/${id}`);
+  if (!response.ok) throw new Error("Cliente no encontrado");
+  return response.json() as Promise<Cliente>;
+}
+
+// Uso
+async function main() {
+  const cliente = await obtenerCliente("cust_123");
+  console.log(cliente.nombre);
+}
+
+// Manejo de errores (equivale a try/except)
+async function seguro() {
+  try {
+    const cliente = await obtenerCliente("cust_123");
+  } catch (error) {
+    console.error("Error:", error);
+  } finally {
+    console.log("Siempre se ejecuta");
+  }
+}
+\end{lstlisting}
+\end{tsbox}
+
+\subsection{Promises en paralelo}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+import asyncio
+
+# Ejecutar en paralelo
+clientes = await asyncio.gather(
+    obtener_cliente("c1"),
+    obtener_cliente("c2"),
+    obtener_cliente("c3"),
+)
+\end{lstlisting}
+\end{pybox}
+
+\begin{tsbox}
+\begin{lstlisting}[style=typescript]
+// Promise.all = asyncio.gather
+const [c1, c2, c3] = await Promise.all([
+  obtenerCliente("c1"),
+  obtenerCliente("c2"),
+  obtenerCliente("c3"),
+]);
+
+// Promise.allSettled = no falla si uno falla
+const resultados = await Promise.allSettled([
+  obtenerCliente("c1"),
+  obtenerCliente("inexistente"),  // este puede fallar
+]);
+resultados.forEach(r => {
+  if (r.status === "fulfilled") console.log(r.value);
+  else console.error(r.reason);
+});
+\end{lstlisting}
+\end{tsbox}
+
+% ─── SECCIÓN 4: GENERICS ─────────────────────────────────────────────────────
+\section{Generics}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from typing import TypeVar, Generic, List
+
+T = TypeVar('T')
+
+class Repositorio(Generic[T]):
+    def __init__(self):
+        self._items: List[T] = []
+
+    def agregar(self, item: T) -> None:
+        self._items.append(item)
+
+    def obtener(self, i: int) -> T:
+        return self._items[i]
+
+repo_clientes: Repositorio[Cliente] = Repositorio()
+\end{lstlisting}
+\end{pybox}
+
+\begin{tsbox}
+\begin{lstlisting}[style=typescript]
+// Generic con <T> (sintaxis directa, sin TypeVar)
+class Repositorio<T> {
+  private items: T[] = [];
+
+  agregar(item: T): void {
+    this.items.push(item);
+  }
+
+  obtener(i: number): T {
+    return this.items[i];
+  }
+}
+
+const repoClientes = new Repositorio<Cliente>();
+
+// Funciones genericas
+function primero<T>(lista: T[]): T | undefined {
+  return lista[0];
+}
+
+// Con constraint (equivale a TypeVar con bound=)
+function obtenerNombre<T extends { nombre: string }>(entidad: T): string {
+  return entidad.nombre;
+}
+
+// Tipos de utilidad genericos (muy usados en APIs)
+type ApiResponse<T> = {
+  data: T;
+  ok: boolean;
+  error?: string;
+};
+
+type ClienteResponse = ApiResponse<Cliente>;
+type ListaResponse = ApiResponse<Cliente[]>;
+\end{lstlisting}
+\end{tsbox}
+
+% ─── SECCIÓN 5: MÓDULOS ──────────────────────────────────────────────────────
+\section{Módulos e Imports}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+# cliente.py
+class Cliente:
+    pass
+
+def crear_cliente(data: dict) -> Cliente:
+    pass
+
+# main.py
+from cliente import Cliente, crear_cliente
+import cliente as mod
+from cliente import *  # evitar
+\end{lstlisting}
+\end{pybox}
+
+\begin{tsbox}
+\begin{lstlisting}[style=typescript]
+// cliente.ts
+export interface Cliente {
+  id: string;
+  nombre: string;
+}
+
+export function crearCliente(data: Partial<Cliente>): Cliente {
+  return { id: crypto.randomUUID(), nombre: data.nombre ?? "" };
+}
+
+export default class ClienteService {}  // export default = un solo default
+
+// main.ts
+import { Cliente, crearCliente } from "./cliente";  // named exports
+import ClienteService from "./cliente";              // default export
+import * as clienteMod from "./cliente";             // namespace import
+import type { Cliente } from "./cliente";            // solo el tipo (no JS)
+\end{lstlisting}
+\end{tsbox}
+
+\begin{tipbox}
+\texttt{import type} es importante en TypeScript: importa solo la definición de tipo,
+sin incluir el código JavaScript en el bundle. Úsalo cuando solo necesitas el tipo
+para anotaciones, no el valor en runtime.
+\end{tipbox}
+
+% ─── SECCIÓN 6: VUE.JS ───────────────────────────────────────────────────────
+\section{Vue.js 3 — Composition API}
+
+\begin{vuebox}
+\begin{lstlisting}[style=typescript]
+<script setup lang="ts">
+// <script setup> es la forma moderna (Vue 3.2+)
+// Equivale a defineComponent() pero mas limpio
+
+import { ref, reactive, computed, watch, onMounted } from 'vue';
+
+// ref() = variable reactiva simple (primitivos)
+// Acceso con .value en JS, pero sin .value en el template
+const count = ref<number>(0);
+const nombre = ref<string>('');
+
+// reactive() = objeto reactivo completo
+const estado = reactive({
+  cargando: false,
+  error: null as string | null,
+  clientes: [] as Cliente[],
+});
+
+// computed() = propiedad derivada (equivale a @property en Python)
+const nombreMayusculas = computed(() => nombre.value.toUpperCase());
+const hayClientes = computed(() => estado.clientes.length > 0);
+
+// watch() = observar cambios (como un setter con efecto secundario)
+watch(nombre, (nuevoValor, valorAnterior) => {
+  console.log(`Cambio: ${valorAnterior} -> ${nuevoValor}`);
+});
+
+// onMounted() = se ejecuta cuando el componente monta (como useEffect[] en React)
+onMounted(async () => {
+  estado.cargando = true;
+  try {
+    estado.clientes = await obtenerClientes();
+  } finally {
+    estado.cargando = false;
+  }
+});
+
+// Funciones normales (automaticamente disponibles en el template)
+function incrementar() {
+  count.value++;
+}
+
+async function cargarCliente(id: string) {
+  const cliente = await obtenerCliente(id);
+  estado.clientes.push(cliente);
+}
+</script>
+
+<template>
+  <!-- count sin .value en el template -->
+  <p>{{ count }}</p>
+  <button @click="incrementar">+1</button>
+
+  <!-- v-if, v-for son equivalentes a if/for de Jinja2 -->
+  <div v-if="estado.cargando">Cargando...</div>
+  <ul v-else>
+    <li v-for="cliente in estado.clientes" :key="cliente.id">
+      {{ cliente.nombre }}
+    </li>
+  </ul>
+</template>
+\end{lstlisting}
+\end{vuebox}
+
+\subsection{Props y Emits (comunicación entre componentes)}
+
+\begin{vuebox}
+\begin{lstlisting}[style=typescript]
+<script setup lang="ts">
+// Props (datos que entran al componente, como argumentos)
+interface Props {
+  clienteId: string;
+  readonly?: boolean;
+}
+const props = defineProps<Props>();
+
+// Emits (eventos que salen del componente)
+const emit = defineEmits<{
+  'cliente-guardado': [cliente: Cliente];
+  'cancelado': [];
+}>();
+
+// Uso:
+emit('cliente-guardado', { id: '1', nombre: 'Juan', email: 'j@j.com' });
+</script>
+
+<template>
+  <!-- :clienteId pasa prop dinamica, clienteId="literal" es string literal -->
+  <ChildComponent :cliente-id="props.clienteId" @cliente-guardado="manejar" />
+</template>
+\end{lstlisting}
+\end{vuebox}
+
+% ─── SECCIÓN 7: TABLA DE EQUIVALENCIAS ──────────────────────────────────────
+\section{Tabla de Equivalencias Python $\to$ TypeScript}
+
+\begin{center}
+\begin{tabular}{p{4cm} p{4.5cm} p{5cm}}
+\toprule
+\textbf{Concepto} & \textbf{Python} & \textbf{TypeScript} \\
+\midrule
+Tipo string & \texttt{str} & \texttt{string} \\
+Tipo entero & \texttt{int} & \texttt{number} \\
+Tipo flotante & \texttt{float} & \texttt{number} \\
+Tipo booleano & \texttt{bool} & \texttt{boolean} \\
+Sin tipo / desconocido & \texttt{Any} & \texttt{any} / \texttt{unknown} \\
+Opcional & \texttt{Optional[T]} & \texttt{T | undefined} / \texttt{T?} \\
+Lista & \texttt{List[T]} & \texttt{T[]} / \texttt{Array<T>} \\
+Diccionario & \texttt{Dict[str, T]} & \texttt{Record<string, T>} \\
+Tupla & \texttt{Tuple[int, str]} & \texttt{[number, string]} \\
+Clase de datos & \texttt{@dataclass} & \texttt{interface} / \texttt{class} \\
+Herencia & \texttt{class B(A)} & \texttt{class B extends A} \\
+Mixin & \texttt{class C(A, B)} & \texttt{class C extends A implements B} \\
+TypeVar/Generic & \texttt{TypeVar, Generic[T]} & \texttt{<T>} \\
+Lambda & \texttt{lambda x: x+1} & \texttt{(x) => x+1} \\
+Comprensión lista & \texttt{[x*2 for x in l]} & \texttt{l.map(x => x*2)} \\
+Filtro & \texttt{[x for x in l if x>0]} & \texttt{l.filter(x => x>0)} \\
+Reduce & \texttt{reduce(fn, l, 0)} & \texttt{l.reduce(fn, 0)} \\
+Formato string & \texttt{f"hola \{x\}"} & \texttt{`hola \${x}`} \\
+Null & \texttt{None} & \texttt{null} / \texttt{undefined} \\
+Asyncio gather & \texttt{asyncio.gather()} & \texttt{Promise.all()} \\
+Try/except/finally & \texttt{try/except/finally} & \texttt{try/catch/finally} \\
+Decorador & \texttt{@decorator} & \texttt{@Decorator()} (limitado) \\
+Módulo import & \texttt{from mod import fn} & \texttt{import \{ fn \} from './mod'} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─── SECCIÓN 8: EJERCICIOS ───────────────────────────────────────────────────
+\section{Ejercicios Prácticos}
+
+\begin{ejerciciobox}{1 — Tipado básico}
+Tienes esta función en Python. Pásala a TypeScript con tipado correcto:
+\begin{lstlisting}[style=python]
+def calcular_monto_con_interes(
+    monto: float,
+    tasa: float = 0.05,
+    periodos: int = 12
+) -> dict:
+    total = monto * ((1 + tasa) ** periodos)
+    return {"original": monto, "total": total, "interes": total - monto}
+\end{lstlisting}
+\end{ejerciciobox}
+
+\begin{solucionbox}{1}
+\begin{lstlisting}[style=typescript]
+interface ResultadoInteres {
+  original: number;
+  total: number;
+  interes: number;
+}
+
+function calcularMontoConInteres(
+  monto: number,
+  tasa: number = 0.05,
+  periodos: number = 12
+): ResultadoInteres {
+  const total = monto * Math.pow(1 + tasa, periodos);
+  return { original: monto, total, interes: total - monto };
+}
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{2 — Async/Await con manejo de error}
+Escribe una función TypeScript \texttt{obtenerClienteSeguro(id: string)} que llame a una API,
+devuelva el cliente si existe, o \texttt{null} si falla (sin lanzar error al caller).
+\end{ejerciciobox}
+
+\begin{solucionbox}{2}
+\begin{lstlisting}[style=typescript]
+async function obtenerClienteSeguro(id: string): Promise<Cliente | null> {
+  try {
+    const response = await fetch(`https://api.trytoku.com/customers/${id}`, {
+      headers: { Authorization: `Bearer ${process.env.TOKU_API_KEY}` },
+    });
+    if (!response.ok) return null;
+    return response.json() as Promise<Cliente>;
+  } catch {
+    return null;
+  }
+}
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{3 — Generics con restriccion}
+Crea una función genérica \texttt{paginar<T>} que reciba un arreglo de T,
+un número de página y tamaño de página, y devuelva
+\texttt{\{ items: T[], total: number, pagina: number, totalPaginas: number \}}.
+\end{ejerciciobox}
+
+\begin{solucionbox}{3}
+\begin{lstlisting}[style=typescript]
+interface Pagina<T> {
+  items: T[];
+  total: number;
+  pagina: number;
+  totalPaginas: number;
+}
+
+function paginar<T>(lista: T[], pagina: number, tamano: number = 10): Pagina<T> {
+  const total = lista.length;
+  const totalPaginas = Math.ceil(total / tamano);
+  const inicio = (pagina - 1) * tamano;
+  const items = lista.slice(inicio, inicio + tamano);
+  return { items, total, pagina, totalPaginas };
+}
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{4 — Vue.js Composable}
+Crea un composable \texttt{useClientes()} que exponga:
+\texttt{clientes} (lista reactiva), \texttt{cargando} (boolean),
+\texttt{cargar()} (función async) y \texttt{total} (computed).
+\end{ejerciciobox}
+
+\begin{solucionbox}{4}
+\begin{lstlisting}[style=typescript]
+// useClientes.ts
+import { ref, computed } from 'vue';
+
+export function useClientes() {
+  const clientes = ref<Cliente[]>([]);
+  const cargando = ref(false);
+  const error = ref<string | null>(null);
+
+  const total = computed(() => clientes.value.length);
+
+  async function cargar() {
+    cargando.value = true;
+    error.value = null;
+    try {
+      const resp = await fetch('/api/customers');
+      clientes.value = await resp.json();
+    } catch (e) {
+      error.value = 'Error al cargar clientes';
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  return { clientes, cargando, error, total, cargar };
+}
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{5 — Tipos de utilidad Toku}
+Dado el modelo de Toku, crea tipos TypeScript para:
+\texttt{Invoice} (deuda), \texttt{InvoiceCreate} (para crear, sin id ni fechas automáticas),
+\texttt{InvoiceEstado} (union literal de estados posibles).
+\end{ejerciciobox}
+
+\begin{solucionbox}{5}
+\begin{lstlisting}[style=typescript]
+type InvoiceEstado = "pending" | "paid" | "failed" | "void" | "partially_paid";
+
+interface Invoice {
+  id: string;
+  customerId: string;
+  productId: string;
+  externalId?: string;
+  amount: number;           // en centavos o moneda base
+  currency: "CLP" | "MXN" | "BRL";
+  estado: InvoiceEstado;
+  dueDate: Date;
+  paidAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Para crear: sin campos autogenerados
+type InvoiceCreate = Omit<Invoice, "id" | "estado" | "paidAt" | "createdAt" | "updatedAt">;
+
+// Para actualizar: todo opcional
+type InvoiceUpdate = Partial<Pick<Invoice, "externalId" | "amount" | "dueDate">>;
+\end{lstlisting}
+\end{solucionbox}
+
+% ─── CHEATSHEET ──────────────────────────────────────────────────────────────
+\newpage
+\section{Cheatsheet: TypeScript en Una Página}
+
+\begin{multicols}{2}
+\textbf{\textcolor{tsblue}{Tipos básicos}}
+\begin{lstlisting}[style=typescript,numbers=none]
+string, number, boolean
+null, undefined, void
+any, unknown, never
+T[], Array<T>
+[T, U]          // tupla
+Record<K, V>    // diccionario
+\end{lstlisting}
+
+\textbf{\textcolor{tsblue}{Interfaces}}
+\begin{lstlisting}[style=typescript,numbers=none]
+interface A { x: number; y?: string }
+type B = A & { z: boolean }  // interseccion
+type C = A | B               // union
+type D = Partial<A>          // todos opcionales
+type E = Required<A>         // todos requeridos
+type F = Pick<A, "x">       // solo algunos campos
+type G = Omit<A, "y">       // sin algunos campos
+\end{lstlisting}
+
+\textbf{\textcolor{tsblue}{Funciones}}
+\begin{lstlisting}[style=typescript,numbers=none]
+function f(x: number): string {}
+const f = (x: number): string => {};
+const f = (x = 0) => x;      // default
+const f = (...xs: number[]) => {}; // rest
+\end{lstlisting}
+
+\textbf{\textcolor{tsblue}{Async}}
+\begin{lstlisting}[style=typescript,numbers=none]
+async function f(): Promise<T> {
+  const x = await promesa;
+}
+await Promise.all([p1, p2]);
+await Promise.allSettled([p1, p2]);
+\end{lstlisting}
+
+\columnbreak
+
+\textbf{\textcolor{tsblue}{Generics}}
+\begin{lstlisting}[style=typescript,numbers=none]
+function id<T>(x: T): T { return x; }
+class Repo<T> { items: T[] = []; }
+function fn<T extends {id: string}>(x: T) {}
+\end{lstlisting}
+
+\textbf{\textcolor{vuegreen}{Vue Composition API}}
+\begin{lstlisting}[style=typescript,numbers=none]
+const x = ref<number>(0);  // reactivo
+x.value++;                  // acceso con .value
+const obj = reactive({});   // objeto reactivo
+const c = computed(() => x.value * 2);
+watch(x, (nuevo, viejo) => {});
+onMounted(async () => { ... });
+\end{lstlisting}
+
+\textbf{\textcolor{vuegreen}{Template Vue}}
+\begin{lstlisting}[style=typescript,numbers=none]
+{{ variable }}
+:prop="valor"    // prop dinamica
+@click="fn"      // evento
+v-if="cond"
+v-for="x in xs" :key="x.id"
+v-model="ref"    // two-way binding
+\end{lstlisting}
+
+\textbf{\textcolor{warnambel}{Patrones útiles}}
+\begin{lstlisting}[style=typescript,numbers=none]
+x ?? "default"        // nullish coalescing
+x?.propiedad          // optional chaining
+x!.propiedad          // non-null assertion
+x as Tipo             // type assertion
+typeof x === "string" // type guard
+\end{lstlisting}
+\end{multicols}
+
+\end{document}

@@ -1,0 +1,26 @@
+# Excluir carpeta de ofertas
+ofertas-toku-dcc/
+
+# Excluir análisis
+ANALISIS_TOKU_ENTREVISTA.md
+
+# Archivos de compilación LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.toc
+*.nav
+*.snm
+
+# Otros archivos compilados
+*.pdf
+*.dvi
+*.ps
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db

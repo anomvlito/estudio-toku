@@ -1,0 +1,408 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multicol}
+
+\definecolor{fapigreen}{RGB}{0,150,100}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{alertred}{RGB}{220,50,50}
+\definecolor{tipgreen}{RGB}{39,174,96}
+\definecolor{warnambel}{RGB}{230,126,34}
+\definecolor{darkgray}{RGB}{50,50,50}
+
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{fapigreen}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{fapigreen!40},
+  breaklines=true, tabsize=2, showstringspaces=false,
+  morekeywords={Optional,List,Union,Dict,Any,BaseModel,Field,validator,
+                Depends,HTTPException,status,BackgroundTasks,Request,Response}
+}
+
+\newtcolorbox{tipbox}{colback=tipgreen!10,colframe=tipgreen,title=\textbf{Tip},fonttitle=\small\bfseries}
+\newtcolorbox{alertbox}{colback=alertred!10,colframe=alertred,title=\textbf{Ojo},fonttitle=\small\bfseries}
+\newtcolorbox{ejerciciobox}[1]{colback=warnambel!8,colframe=warnambel,title=\textbf{Ejercicio #1},fonttitle=\small\bfseries}
+\newtcolorbox{solucionbox}[1]{colback=tipgreen!8,colframe=tipgreen!60,title=\textbf{Solución #1},fonttitle=\small\bfseries}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{fapigreen}{\textbf{FastAPI en Profundidad}}}
+\rhead{\textcolor{gray}{Preparación Técnica — Toku}}
+\cfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{fapigreen}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{fapigreen} FastAPI en Profundidad\par}
+  \vspace{0.5cm}
+  {\large\color{gray} Más allá de los tutoriales — lo que Toku usa en producción\par}
+  \vspace{0.3cm}
+  \textcolor{fapigreen!40}{\rule{8cm}{2pt}}
+  \vspace{1.5cm}
+
+  \begin{tcolorbox}[colback=fapigreen!5,colframe=fapigreen,width=11cm]
+    \centering
+    Ya sabes Python. Ya hiciste algo con FastAPI.\\[4pt]
+    Este documento te lleva al nivel de producción.
+  \end{tcolorbox}
+  \vspace{1.5cm}
+  \begin{tabular}{ll}
+    \textcolor{fapigreen}{\textbullet} & Pydantic v2 para validación\\
+    \textcolor{fapigreen}{\textbullet} & Dependency Injection (el corazón de FastAPI)\\
+    \textcolor{fapigreen}{\textbullet} & Async y manejo de conexiones DB\\
+    \textcolor{fapigreen}{\textbullet} & Middleware y manejo de errores\\
+    \textcolor{fapigreen}{\textbullet} & Estructura de proyecto real\\
+    \textcolor{warnambel}{\textbullet} & Ejercicios de diseño de API\\
+  \end{tabular}
+  \vfill
+  {\small\color{gray} Marzo 2026 — Estudio Personal\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─── SECCIÓN 1: PYDANTIC V2 ──────────────────────────────────────────────────
+\section{Pydantic v2 — Validación y Serialización}
+
+\begin{lstlisting}[style=python]
+from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import Optional
+from datetime import date
+from enum import Enum
+
+class Moneda(str, Enum):
+    CLP = "CLP"
+    MXN = "MXN"
+    BRL = "BRL"
+
+class InvoiceCreate(BaseModel):
+    customer_id: str
+    monto: int = Field(gt=0, description="Monto en centavos, debe ser positivo")
+    moneda: Moneda = Moneda.CLP
+    fecha_vencimiento: date
+    external_id: Optional[str] = None
+    descripcion: str = Field(default="", max_length=500)
+
+    @field_validator("external_id")
+    @classmethod
+    def external_id_no_espacios(cls, v):
+        if v and " " in v:
+            raise ValueError("external_id no puede tener espacios")
+        return v
+
+    @model_validator(mode="after")
+    def vencimiento_futuro(self):
+        from datetime import date as D
+        if self.fecha_vencimiento <= D.today():
+            raise ValueError("La fecha de vencimiento debe ser futura")
+        return self
+
+class InvoiceResponse(BaseModel):
+    id: str
+    customer_id: str
+    monto: int
+    moneda: Moneda
+    estado: str
+    fecha_vencimiento: date
+    created_at: str
+
+    model_config = {"from_attributes": True}  # para leer desde ORM/asyncpg
+\end{lstlisting}
+
+\begin{tipbox}
+\texttt{model\_config = \{"from\_attributes": True\}} reemplaza al viejo \texttt{orm\_mode = True} de Pydantic v1.
+Es necesario para crear modelos desde objetos de base de datos (asyncpg Records).
+\end{tipbox}
+
+% ─── SECCIÓN 2: DEPENDENCY INJECTION ─────────────────────────────────────────
+\section{Dependency Injection — El Corazón de FastAPI}
+
+\begin{lstlisting}[style=python]
+# dependencies.py
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import asyncpg
+
+# Pool de conexiones a la BD
+async def get_db() -> asyncpg.Connection:
+    """Dependency: proporciona una conexion de BD por request"""
+    async with db_pool.acquire() as conn:
+        yield conn  # yield = context manager; libera la conexion al terminar
+
+# Autenticacion
+security = HTTPBearer()
+
+async def get_current_org(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: asyncpg.Connection = Depends(get_db),
+) -> dict:
+    """Dependency: verifica el API key y retorna la organizacion"""
+    api_key = credentials.credentials
+
+    org = await db.fetchrow(
+        "SELECT id, nombre, pais FROM organizations WHERE api_key = $1",
+        api_key
+    )
+    if not org:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API Key invalida"
+        )
+    return dict(org)
+
+# En el router:
+@router.post("/invoices", response_model=InvoiceResponse)
+async def crear_invoice(
+    payload: InvoiceCreate,
+    org: dict = Depends(get_current_org),  # autenticacion automatica
+    db: asyncpg.Connection = Depends(get_db),  # BD automatica
+):
+    # org ya fue validada por get_current_org
+    invoice = await db.fetchrow(
+        """INSERT INTO invoices (customer_id, monto, moneda, fecha_vencimiento, external_id)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *""",
+        payload.customer_id, payload.monto, payload.moneda.value,
+        payload.fecha_vencimiento, payload.external_id
+    )
+    return InvoiceResponse(**dict(invoice))
+\end{lstlisting}
+
+% ─── SECCIÓN 3: MANEJO DE ERRORES ────────────────────────────────────────────
+\section{Manejo de Errores Consistente}
+
+\begin{lstlisting}[style=python]
+# errors.py
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+import asyncpg
+
+app = FastAPI()
+
+class TokuAPIError(Exception):
+    def __init__(self, mensaje: str, codigo: str, status_code: int = 400):
+        self.mensaje = mensaje
+        self.codigo = codigo
+        self.status_code = status_code
+
+@app.exception_handler(TokuAPIError)
+async def manejar_toku_error(request: Request, exc: TokuAPIError):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.codigo, "mensaje": exc.mensaje}
+    )
+
+@app.exception_handler(asyncpg.UniqueViolationError)
+async def manejar_duplicado(request: Request, exc: asyncpg.UniqueViolationError):
+    return JSONResponse(
+        status_code=409,
+        content={"error": "DUPLICATE", "mensaje": "Ya existe un registro con ese ID"}
+    )
+
+@app.exception_handler(ValidationError)
+async def manejar_validacion(request: Request, exc: ValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"error": "VALIDATION_ERROR", "detalle": exc.errors()}
+    )
+
+# Uso en ruta:
+async def obtener_cliente(id: str, db=Depends(get_db)):
+    cliente = await db.fetchrow("SELECT * FROM customers WHERE id = $1", id)
+    if not cliente:
+        raise TokuAPIError(
+            mensaje=f"Cliente {id} no encontrado",
+            codigo="CUSTOMER_NOT_FOUND",
+            status_code=404
+        )
+    return cliente
+\end{lstlisting}
+
+% ─── SECCIÓN 4: ESTRUCTURA DE PROYECTO ───────────────────────────────────────
+\section{Estructura de Proyecto Real}
+
+\begin{lstlisting}[style=python,numbers=none]
+# Estructura tipica de microservicio FastAPI en Toku
+toku-invoice-service/
+    src/
+        main.py           # FastAPI app, startup, shutdown
+        config.py         # Settings desde variables de entorno
+        database.py       # Pool de conexiones asyncpg
+        dependencies.py   # Deps compartidas (auth, db)
+        errors.py         # Exception handlers
+        routers/
+            invoices.py   # POST /invoices, GET /invoices, etc.
+            customers.py
+            webhooks.py
+        models/
+            invoice.py    # Pydantic schemas
+            customer.py
+        services/
+            invoice_service.py    # Logica de negocio
+            payment_service.py
+        tasks/
+            payment_tasks.py      # Background tasks
+    tests/
+        test_invoices.py
+        test_webhooks.py
+    Dockerfile
+    requirements.txt
+\end{lstlisting}
+
+\begin{lstlisting}[style=python]
+# main.py - estructura basica
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from database import init_pool, close_pool
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_pool()
+    yield
+    # Shutdown
+    await close_pool()
+
+app = FastAPI(
+    title="Toku Invoice Service",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+from routers import invoices, customers, webhooks
+app.include_router(invoices.router, prefix="/api/v1")
+app.include_router(customers.router, prefix="/api/v1")
+app.include_router(webhooks.router)
+\end{lstlisting}
+
+% ─── SECCIÓN 5: TESTING ──────────────────────────────────────────────────────
+\section{Testing de APIs FastAPI}
+
+\begin{lstlisting}[style=python]
+# tests/test_invoices.py
+import pytest
+from httpx import AsyncClient, ASGITransport
+from unittest.mock import AsyncMock, patch
+from main import app
+
+@pytest.fixture
+async def client():
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test"
+    ) as c:
+        yield c
+
+@pytest.fixture
+def headers():
+    return {"Authorization": "Bearer test_api_key"}
+
+@pytest.mark.asyncio
+async def test_crear_invoice_exitoso(client, headers):
+    payload = {
+        "customer_id": "cust_123",
+        "monto": 50000,
+        "moneda": "CLP",
+        "fecha_vencimiento": "2027-12-31"
+    }
+    with patch("routers.invoices.get_current_org", return_value={"id": "org_1"}):
+        with patch("routers.invoices.db") as mock_db:
+            mock_db.fetchrow = AsyncMock(return_value={
+                "id": "inv_new", "customer_id": "cust_123",
+                "monto": 50000, "moneda": "CLP",
+                "estado": "pending", "fecha_vencimiento": "2027-12-31",
+                "created_at": "2026-03-17T00:00:00"
+            })
+
+            response = await client.post("/api/v1/invoices", json=payload, headers=headers)
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["estado"] == "pending"
+    assert data["monto"] == 50000
+
+@pytest.mark.asyncio
+async def test_crear_invoice_monto_invalido(client, headers):
+    payload = {"customer_id": "c1", "monto": -100, "fecha_vencimiento": "2027-12-31"}
+    response = await client.post("/api/v1/invoices", json=payload, headers=headers)
+    assert response.status_code == 422
+\end{lstlisting}
+
+\section{Cheatsheet FastAPI}
+
+\begin{multicols}{2}
+\textbf{\textcolor{fapigreen}{Rutas comunes}}
+\begin{lstlisting}[style=python,numbers=none]
+@router.get("/items/{id}", response_model=R)
+@router.post("/items", status_code=201)
+@router.put("/items/{id}")
+@router.delete("/items/{id}", status_code=204)
+\end{lstlisting}
+
+\textbf{\textcolor{fapigreen}{Pydantic v2}}
+\begin{lstlisting}[style=python,numbers=none]
+class M(BaseModel):
+    x: int = Field(gt=0)
+    y: Optional[str] = None
+    model_config = {"from_attributes": True}
+\end{lstlisting}
+
+\textbf{\textcolor{fapigreen}{HTTPException}}
+\begin{lstlisting}[style=python,numbers=none]
+raise HTTPException(
+    status_code=404,
+    detail="No encontrado"
+)
+\end{lstlisting}
+
+\columnbreak
+
+\textbf{\textcolor{fapigreen}{Dependencies}}
+\begin{lstlisting}[style=python,numbers=none]
+async def dep():
+    yield valor   # context manager
+# uso:
+def ruta(x = Depends(dep)):
+    ...
+\end{lstlisting}
+
+\textbf{\textcolor{fapigreen}{Background tasks}}
+\begin{lstlisting}[style=python,numbers=none]
+def ruta(bg: BackgroundTasks):
+    bg.add_task(fn, arg1, arg2)
+    return {"status": "ok"}
+\end{lstlisting}
+
+\textbf{\textcolor{fapigreen}{Lifespan (startup/shutdown)}}
+\begin{lstlisting}[style=python,numbers=none]
+@asynccontextmanager
+async def lifespan(app):
+    # startup
+    yield
+    # shutdown
+app = FastAPI(lifespan=lifespan)
+\end{lstlisting}
+\end{multicols}
+
+\end{document}
