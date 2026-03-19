@@ -3,9 +3,15 @@ ofertas-toku-dcc/
 
 # Excluir análisis
 ANALISIS_TOKU_ENTREVISTA.md
+CLAUDE.md
 
 # Otros archivos compilados
+# Otros archivos compilados
 *.dvi
+*.aux
+*.toc
+*.fdb_latexmk
+*.idx
 *.ps
 *.pdf
 *.out

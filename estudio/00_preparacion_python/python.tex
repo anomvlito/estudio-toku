@@ -1,0 +1,1292 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multicol}
+\usepackage{amssymb}
+
+% Colores
+\definecolor{pyblue}{RGB}{53,114,165}
+\definecolor{pyorange}{RGB}{255,133,27}
+\definecolor{vuegreen}{RGB}{66,184,131}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{alertred}{RGB}{220,50,50}
+\definecolor{tipgreen}{RGB}{39,174,96}
+\definecolor{warnambel}{RGB}{230,126,34}
+\definecolor{darkgray}{RGB}{50,50,50}
+\definecolor{sqlblue}{RGB}{42,130,189}
+
+% Listings Python
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{pyblue}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.4pt, rulecolor=\color{pyblue!40},
+  breaklines=true, breakatwhitespace=true, tabsize=2,
+  showstringspaces=false,
+  morekeywords={async,await,def,class,from,import,as,
+                TypeVar,Generic,Optional,Union,List,Dict,
+                Mapped,mapped\_column,Depends,Field,
+                pytest,asyncio,patch,AsyncMock}
+}
+
+% Listings Bash/texto
+\lstdefinestyle{bash}{
+  language=bash,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{darkgray}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  frame=single, framerule=0.4pt, rulecolor=\color{gray!40},
+  breaklines=true, tabsize=2,
+  showstringspaces=false,
+  numbers=none
+}
+
+% Cajas temáticas
+\newtcolorbox{tipbox}{
+  colback=tipgreen!10, colframe=tipgreen,
+  title=\textbf{Tip}, fonttitle=\small\bfseries
+}
+\newtcolorbox{alertbox}{
+  colback=alertred!10, colframe=alertred,
+  title=\textbf{Ojo}, fonttitle=\small\bfseries
+}
+\newtcolorbox{pybox}{
+  colback=pyblue!8, colframe=pyblue,
+  title=\textbf{Python}, fonttitle=\small\bfseries
+}
+\newtcolorbox{keybox}{
+  colback=pyorange!8, colframe=pyorange,
+  title=\textbf{Concepto clave}, fonttitle=\small\bfseries
+}
+\newtcolorbox{ejerciciobox}[1]{
+  colback=warnambel!8, colframe=warnambel,
+  title=\textbf{Ejercicio #1}, fonttitle=\small\bfseries
+}
+\newtcolorbox{solucionbox}[1]{
+  colback=tipgreen!8, colframe=tipgreen!60,
+  title=\textbf{Solución #1}, fonttitle=\small\bfseries
+}
+
+% Headers
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{pyblue}{\textbf{Python para Toku}}}
+\rhead{\textcolor{gray}{Preparación Técnica — Toku}}
+\cfoot{\thepage}
+
+% Secciones en color
+\titleformat{\section}{\large\bfseries\color{pyblue}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+\begin{document}
+
+% ─── PORTADA ──────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{pyblue} Python / FastAPI para Toku\par}
+  \vspace{0.5cm}
+  {\large\color{gray} Preparación Técnica — Stack Backend\par}
+  \vspace{0.3cm}
+  \textcolor{pyorange}{\rule{8cm}{2pt}}
+  \vspace{1cm}
+
+  \begin{tcolorbox}[colback=pyblue!5,colframe=pyblue,width=10cm]
+    \centering
+    \textbf{Stack objetivo:} \texttt{Python + FastAPI + PostgreSQL}\\[4pt]
+    \textbf{Foco:} Pagos recurrentes e integraciones bancarias\\[4pt]
+    \textbf{Nivel:} Intermedio–Avanzado
+  \end{tcolorbox}
+
+  \vspace{1.5cm}
+  {\large Temas\par}
+  \vspace{0.3cm}
+  \begin{tabular}{ll}
+    \textcolor{pyblue}{\textbullet}   & FastAPI: estructura y dependency injection\\
+    \textcolor{pyblue}{\textbullet}   & async/await en profundidad\\
+    \textcolor{pyorange}{\textbullet} & Idempotencia y retries (core de pagos)\\
+    \textcolor{pyblue}{\textbullet}   & pytest y mocking de APIs externas\\
+    \textcolor{pyblue}{\textbullet}   & Pydantic — validación y modelos\\
+    \textcolor{pyblue}{\textbullet}   & Flask vs FastAPI: trade-offs\\
+    \textcolor{pyblue}{\textbullet}   & JWT y OAuth 2.0 Client Credentials\\
+    \textcolor{pyblue}{\textbullet}   & PostgreSQL + SQLAlchemy async\\
+    \textcolor{pyorange}{\textbullet} & Webhooks resilientes con HMAC\\
+    \textcolor{warnambel}{\textbullet}& Checklist y ejercicios\\
+  \end{tabular}
+
+  \vfill
+  {\small\color{gray} Marzo 2026 — Estudio Personal\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─── SECCIÓN 1: FASTAPI ───────────────────────────────────────────────────────
+\section{FastAPI — Estructura y Dependency Injection}
+
+\begin{keybox}
+FastAPI es el framework principal de Toku. Valida automáticamente con Pydantic,
+genera documentación OpenAPI en \texttt{/docs} y soporta async nativo. Fue
+reemplazando a Flask progresivamente desde 2021.
+\end{keybox}
+
+\subsection{Endpoint básico con validación}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from fastapi import FastAPI, Depends, status
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class PaymentCreate(BaseModel):
+    amount: int        # centavos, NUNCA float
+    currency: str = "CLP"
+    mandate_id: str
+    idempotency_key: str  # critico en pagos
+
+class PaymentResponse(BaseModel):
+    id: str
+    status: str
+    amount: int
+
+@app.post(
+    "/payments",
+    response_model=PaymentResponse,
+    status_code=status.HTTP_201_CREATED
+)
+async def create_payment(
+    payment: PaymentCreate,
+    db: Session = Depends(get_db)
+):
+    existing = await db.get_by_idempotency_key(
+        payment.idempotency_key
+    )
+    if existing:
+        return existing  # no duplicar
+
+    return await process_payment(payment)
+\end{lstlisting}
+\end{pybox}
+
+\subsection{Dependency Injection}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
+
+# Dependencia reutilizable en cualquier endpoint
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = (
+        security.Security(security)
+    ),
+    db: Session = Depends(get_db)
+) -> User:
+    payload = verify_token(credentials.credentials)
+    user = await db.get_user(payload["sub"])
+    if not user:
+        raise HTTPException(status_code=401)
+    return user
+
+# Uso: solo agregar como parametro
+@app.get("/me")
+async def get_me(user: User = Depends(get_current_user)):
+    return user
+\end{lstlisting}
+\end{pybox}
+
+\begin{tipbox}
+Dependency Injection en FastAPI es recursiva: una dependencia puede
+tener sus propias dependencias. Ideal para encadenar autenticación,
+permisos y acceso a BD sin repetir código.
+\end{tipbox}
+
+\subsection{Manejo de errores}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+
+# Error especifico
+@app.get("/charges/{charge_id}")
+async def get_charge(charge_id: str):
+    charge = await db.get_charge(charge_id)
+    if not charge:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Cobro {charge_id} no encontrado"
+        )
+    return charge
+
+# Handler global para errores de dominio
+class DomainError(Exception):
+    def __init__(self, message: str, code: str):
+        self.message = message
+        self.code = code
+
+@app.exception_handler(DomainError)
+async def domain_error_handler(
+    request: Request, exc: DomainError
+):
+    return JSONResponse(
+        status_code=422,
+        content={"error": exc.code, "message": exc.message}
+    )
+\end{lstlisting}
+\end{pybox}
+
+% ─── SECCIÓN 2: ASYNC/AWAIT ───────────────────────────────────────────────────
+\section{async/await en Profundidad}
+
+\subsection{Cuándo importa async}
+
+\begin{keybox}
+Async es útil cuando el cuello de botella es \textbf{I/O} (red, disco, BD).
+Para CPU-intensive (cálculos, procesamiento de datos), async no ayuda ---
+necesitarías \texttt{multiprocessing}.
+\end{keybox}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+import asyncio
+import httpx
+
+# SYNC: bloquea el thread mientras espera al banco
+def get_balance_sync(account_id: str) -> dict:
+    response = requests.get(f"/accounts/{account_id}")
+    return response.json()
+
+# ASYNC: libera el thread, puede atender otras requests
+async def get_balance_async(account_id: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"/accounts/{account_id}"
+        )
+        return response.json()
+
+# Ejecutar multiples llamadas EN PARALELO
+async def check_multiple(account_ids: list[str]):
+    async with httpx.AsyncClient() as client:
+        tasks = [
+            client.get(f"/accounts/{aid}")
+            for aid in account_ids
+        ]
+        results = await asyncio.gather(*tasks)
+    return [r.json() for r in results]
+\end{lstlisting}
+\end{pybox}
+
+\subsection{Errores comunes}
+
+\begin{alertbox}
+\begin{lstlisting}[style=python]
+# MAL: bloquea el event loop (mata el rendimiento)
+async def bad():
+    time.sleep(5)      # bloquea todo el servidor
+    requests.get(url)  # bloquea todo el servidor
+
+# MAL: olvidar await
+async def forget_await():
+    # retorna coroutine, no el resultado!
+    result = fetch_data()
+
+# BIEN
+async def good():
+    await asyncio.sleep(5)
+    async with httpx.AsyncClient() as c:
+        result = await c.get(url)
+\end{lstlisting}
+\end{alertbox}
+
+\subsection{asyncio.gather vs asyncio.wait}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+import asyncio
+
+# gather: todos en paralelo, falla si uno falla
+results = await asyncio.gather(
+    fetch_bank_a(),
+    fetch_bank_b(),
+    fetch_bank_c(),
+)
+
+# gather con return_exceptions: no falla aunque uno falle
+results = await asyncio.gather(
+    fetch_bank_a(),
+    fetch_bank_b(),
+    return_exceptions=True  # errores como valores
+)
+for r in results:
+    if isinstance(r, Exception):
+        print(f"Fallo: {r}")
+    else:
+        print(f"OK: {r}")
+\end{lstlisting}
+\end{pybox}
+
+% ─── SECCIÓN 3: IDEMPOTENCIA Y RETRIES ───────────────────────────────────────
+\section{Idempotencia y Retries}
+
+\begin{keybox}
+\textbf{Idempotencia:} el mismo \texttt{idempotency\_key} siempre devuelve el
+mismo resultado, sin crear duplicados. En pagos, un cobro duplicado es un
+desastre legal y operacional.
+\end{keybox}
+
+\subsection{Patrón de idempotencia}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from fastapi import Header
+import uuid
+
+@app.post("/charges")
+async def create_charge(
+    request: ChargeRequest,
+    idempotency_key: str = Header(...),
+    db: Session = Depends(get_db)
+):
+    # 1. Buscar si ya procesamos esta request
+    existing = await db.get_charge_by_idem_key(
+        idempotency_key
+    )
+    if existing:
+        return existing.to_response()
+
+    # 2. Crear en "pending" ANTES de llamar al banco
+    #    Si el proceso muere, la reconciliacion
+    #    puede recuperar el estado desde el banco
+    charge_id = str(uuid.uuid4())
+    await db.create_charge(
+        id=charge_id,
+        amount=request.amount,
+        status="pending",
+        idempotency_key=idempotency_key
+    )
+
+    # 3. Llamar al banco
+    try:
+        bank_resp = await bank.debit(
+            amount=request.amount,
+            mandate_id=request.mandate_id,
+            reference=charge_id
+        )
+        await db.update_charge(
+            charge_id, status="succeeded"
+        )
+        return {"id": charge_id, "status": "succeeded"}
+    except BankError as e:
+        st = "failed" if not e.retryable else "failed_retryable"
+        await db.update_charge(charge_id, status=st)
+        raise
+\end{lstlisting}
+\end{pybox}
+
+\begin{tipbox}
+\textbf{¿Por qué crear el registro antes de llamar al banco?}
+Si el proceso muere entre el cobro exitoso del banco y el insert en BD, tendremos
+un cobro sin registro. Al crear en \texttt{pending} antes, una reconciliación
+posterior puede consultar el banco y actualizar el estado correctamente.
+\end{tipbox}
+
+\subsection{Backoff exponencial con jitter}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+import asyncio
+import random
+
+async def retry_with_backoff(
+    func,
+    max_retries: int = 3,
+    base_delay: float = 1.0,
+    max_delay: float = 60.0
+):
+    """
+    Delays: 1s, 2s, 4s, 8s... hasta max_delay
+    Jitter: variacion aleatoria para evitar
+            thundering herd (pico sincronizado)
+    """
+    for attempt in range(max_retries):
+        try:
+            return await func()
+        except TransientError:
+            if attempt == max_retries - 1:
+                raise
+
+            delay = min(
+                base_delay * (2 ** attempt),
+                max_delay
+            )
+            jitter = delay * 0.1 * (
+                random.random() * 2 - 1
+            )
+            await asyncio.sleep(delay + jitter)
+
+# Uso
+async def charge_with_retry():
+    async def _do():
+        return await bank.debit(amount=10000)
+    return await retry_with_backoff(_do, max_retries=3)
+\end{lstlisting}
+\end{pybox}
+
+\subsection{Qué reintentar y qué no}
+
+\begin{center}
+\begin{tabular}{p{5cm} p{4cm} p{4cm}}
+\toprule
+\textbf{Error del banco} & \textbf{¿Reintentar?} & \textbf{Razón} \\
+\midrule
+Timeout / sin respuesta & \textcolor{tipgreen}{\checkmark} Sí & Transitorio \\
+Banco no disponible & \textcolor{tipgreen}{\checkmark} Sí & Transitorio \\
+Rate limit (429) & \textcolor{tipgreen}{\checkmark} Sí & Transitorio \\
+Mandato cancelado & \textcolor{alertred}{\texttimes} No & Error definitivo \\
+Cuenta inválida & \textcolor{alertred}{\texttimes} No & Error definitivo \\
+Sin autorización (401) & \textcolor{alertred}{\texttimes} No & Error definitivo \\
+Fondos insuficientes & Depende del negocio & Puede reintentarse al día siguiente \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─── SECCIÓN 4: PYTEST Y MOCKING ─────────────────────────────────────────────
+\section{pytest y Mocking de APIs Externas}
+
+\subsection{Configuración básica para FastAPI}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+# conftest.py
+import pytest
+import pytest_asyncio
+from httpx import AsyncClient
+
+@pytest_asyncio.fixture
+async def async_client():
+    async with AsyncClient(
+        app=app, base_url="http://test"
+    ) as client:
+        yield client
+
+@pytest.fixture
+def mock_bank():
+    """Fixture que mockea el cliente bancario"""
+    with patch("app.clients.bank.BankClient") as mock:
+        yield mock
+\end{lstlisting}
+\end{pybox}
+
+\subsection{Tests de idempotencia y retries}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+import pytest
+from unittest.mock import AsyncMock, patch
+
+@pytest.mark.asyncio
+async def test_charge_idempotency():
+    """El mismo key no debe crear dos cobros"""
+    key = "IDEM-001"
+
+    with patch(
+        "app.clients.bank.debit",
+        new_callable=AsyncMock
+    ) as mock_debit:
+        mock_debit.return_value = {
+            "transaction_id": "TXN-1",
+            "status": "approved"
+        }
+
+        r1 = await payment_service.charge(
+            amount=10000, idempotency_key=key
+        )
+        r2 = await payment_service.charge(
+            amount=10000, idempotency_key=key
+        )
+
+    # Solo se llamo al banco una vez
+    assert mock_debit.call_count == 1
+    assert r1["id"] == r2["id"]
+
+
+@pytest.mark.asyncio
+async def test_charge_retries_on_timeout():
+    """Debe reintentar ante errores transitorios"""
+    with patch(
+        "app.clients.bank.debit",
+        new_callable=AsyncMock
+    ) as mock_debit:
+        # Primeros 2 intentos fallan, tercero ok
+        mock_debit.side_effect = [
+            BankTimeoutError(),
+            BankTimeoutError(),
+            {"transaction_id": "TXN-1",
+             "status": "approved"}
+        ]
+
+        result = await payment_service.charge(10000)
+
+    assert result["status"] == "succeeded"
+    assert mock_debit.call_count == 3
+
+
+@pytest.mark.asyncio
+async def test_no_retry_on_mandate_cancelled():
+    """No debe reintentar errores definitivos"""
+    with patch(
+        "app.clients.bank.debit",
+        new_callable=AsyncMock
+    ) as mock_debit:
+        mock_debit.side_effect = MandateCancelledError()
+
+        with pytest.raises(MandateCancelledError):
+            await payment_service.charge(10000)
+
+    assert mock_debit.call_count == 1  # no reintento
+\end{lstlisting}
+\end{pybox}
+
+\begin{tipbox}
+\textbf{side\_effect} con lista permite simular distintos resultados en llamadas
+sucesivas: el primer elemento es el resultado del primer call, el segundo del
+segundo, etc. Ideal para testear lógica de reintentos.
+\end{tipbox}
+
+\subsection{Markers para organizar tests}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+# pyproject.toml
+[tool.pytest.ini_options]
+markers = [
+    "unit: tests unitarios (rapidos, sin BD)",
+    "integration: tests con BD real",
+    "slow: tests lentos",
+]
+
+# Uso en tests
+@pytest.mark.unit
+async def test_idempotency(): ...
+
+@pytest.mark.integration
+async def test_full_payment_flow(): ...
+
+# Correr solo unit tests:
+# pytest -m unit
+# Excluir lentos:
+# pytest -m "not slow"
+\end{lstlisting}
+\end{pybox}
+
+% ─── SECCIÓN 5: PYDANTIC ─────────────────────────────────────────────────────
+\section{Pydantic — Validación y Modelos}
+
+\subsection{Modelos típicos en fintech}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from pydantic import (
+    BaseModel, Field, EmailStr, field_validator
+)
+from enum import Enum
+
+class Currency(str, Enum):
+    CLP = "CLP"
+    MXN = "MXN"
+    BRL = "BRL"
+
+class MandateCreate(BaseModel):
+    email: EmailStr
+    name: str = Field(..., min_length=2, max_length=100)
+    account_number: str
+    currency: Currency = Currency.CLP
+    max_amount: int = Field(
+        ..., gt=0,
+        description="Monto maximo en centavos"
+    )
+
+    @field_validator('account_number')
+    @classmethod
+    def validate_account(cls, v: str) -> str:
+        if not v.isdigit():
+            raise ValueError(
+                "account_number debe contener "
+                "solo digitos"
+            )
+        return v
+
+    @field_validator('max_amount')
+    @classmethod
+    def validate_amount_by_currency(cls, v, info):
+        currency = info.data.get('currency')
+        if currency == Currency.CLP and v < 100:
+            raise ValueError(
+                "Minimo en CLP es 100 centavos"
+            )
+        return v
+\end{lstlisting}
+\end{pybox}
+
+\subsection{Nunca float para dinero}
+
+\begin{alertbox}
+\begin{lstlisting}[style=python]
+# MAL: floating point errors
+price = 0.1 + 0.2
+# >>> 0.30000000000000004
+
+# BIEN: guardar en centavos como int
+amount_in_cents = 1000  # = $10.00 CLP
+# Solo convertir para mostrar al usuario
+display = amount_in_cents / 100  # = 10.0
+
+# O usar Decimal para calculos exactos
+from decimal import Decimal
+price = Decimal("0.10") + Decimal("0.20")
+# >>> Decimal('0.30')
+\end{lstlisting}
+\end{alertbox}
+
+\subsection{Pydantic v2 — model\_validator}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from pydantic import BaseModel, model_validator
+
+class DateRange(BaseModel):
+    start_date: date
+    end_date: date
+
+    @model_validator(mode='after')
+    def check_date_order(self) -> 'DateRange':
+        if self.end_date < self.start_date:
+            raise ValueError(
+                "end_date debe ser posterior a start_date"
+            )
+        return self
+\end{lstlisting}
+\end{pybox}
+
+% ─── SECCIÓN 6: FLASK VS FASTAPI ─────────────────────────────────────────────
+\section{Flask vs FastAPI — Trade-offs}
+
+\begin{center}
+\begin{tabular}{p{3.5cm} p{4.5cm} p{4.5cm}}
+\toprule
+\textbf{Dimensión} & \textbf{Flask} & \textbf{FastAPI} \\
+\midrule
+Validación de datos
+  & Manual (\texttt{marshmallow}, \texttt{wtforms})
+  & Automática (Pydantic) \\
+Async nativo
+  & No (requiere extras en Flask 2.0+)
+  & Sí (ASGI) \\
+Docs API
+  & Plugin externo (\texttt{flask-swagger})
+  & Automática en \texttt{/docs} \\
+Performance
+  & Menor (WSGI sync)
+  & Mayor (ASGI async) \\
+Ecosistema
+  & Más grande, más maduro
+  & Creciendo rápido \\
+Type safety
+  & No nativo
+  & Sí (Pydantic + hints) \\
+Testing async
+  & TestClient simple
+  & \texttt{httpx.AsyncClient} \\
+Curva de aprendizaje
+  & Menor
+  & Un poco más (Pydantic, DI) \\
+Cuándo usarlo
+  & Legacy, prototipos simples
+  & APIs nuevas, alta concurrencia \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+
+\begin{keybox}
+\textbf{Cómo responder en la entrevista:}\\[4pt]
+``Para un servicio de pagos elegiría FastAPI: la validación con Pydantic
+reduce bugs en producción al rechazar datos inválidos antes de llegar
+al negocio, el async nativo maneja mejor las llamadas concurrentes a
+APIs bancarias (podemos hacer 10 consultas en paralelo en lugar de
+secuencial), y la documentación OpenAPI automática facilita la
+integración con los sistemas de nuestros clientes sin documentación
+adicional.''
+\end{keybox}
+
+% ─── SECCIÓN 7: JWT Y OAUTH 2.0 ──────────────────────────────────────────────
+\section{JWT y OAuth 2.0}
+
+\subsection{JWT — implementación con FastAPI}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+import jwt
+from datetime import datetime, timedelta
+from fastapi import HTTPException
+
+SECRET_KEY = "..."  # siempre variable de entorno
+ALGORITHM = "HS256"
+
+def create_access_token(user_id: str) -> str:
+    payload = {
+        "sub": user_id,            # subject: quien es
+        "iat": datetime.utcnow(),  # issued at
+        "exp": datetime.utcnow() + timedelta(minutes=30),
+    }
+    return jwt.encode(payload, SECRET_KEY,
+                      algorithm=ALGORITHM)
+
+def verify_token(token: str) -> dict:
+    try:
+        return jwt.decode(
+            token, SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(401, "Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(401, "Token invalido")
+\end{lstlisting}
+\end{pybox}
+
+\subsection{OAuth 2.0 Client Credentials — integraciones B2B}
+
+Este flujo es el que usa Toku para autenticarse con APIs bancarias.
+
+\begin{center}
+\begin{tabular}{p{6cm} p{6cm}}
+\toprule
+\textbf{Paso} & \textbf{Detalle} \\
+\midrule
+Toku envía \texttt{client\_id + client\_secret}
+  & POST al endpoint de tokens del banco \\
+Banco responde con \texttt{access\_token}
+  & Incluye \texttt{expires\_in} en segundos \\
+Toku usa el token en cada request
+  & Header: \texttt{Authorization: Bearer <token>} \\
+Cuando expira, Toku renueva automáticamente
+  & Sin intervención del usuario \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+import httpx
+from datetime import datetime, timedelta
+
+class BankOAuthClient:
+    def __init__(
+        self,
+        client_id: str,
+        client_secret: str,
+        token_url: str
+    ):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.token_url = token_url
+        self._token: str | None = None
+        self._expires_at: datetime | None = None
+
+    async def get_token(self) -> str:
+        # Reusar token si sigue vigente
+        now = datetime.utcnow()
+        if self._token and self._expires_at > now:
+            return self._token
+
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                self.token_url,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                }
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+        self._token = data["access_token"]
+        # Renovar 30 seg antes de expirar
+        self._expires_at = now + timedelta(
+            seconds=data["expires_in"] - 30
+        )
+        return self._token
+
+    async def debit(
+        self, amount: int, account: str
+    ) -> dict:
+        token = await self.get_token()
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "/debit",
+                json={"amount": amount,
+                      "account": account},
+                headers={
+                    "Authorization": f"Bearer {token}"
+                }
+            )
+            resp.raise_for_status()
+            return resp.json()
+\end{lstlisting}
+\end{pybox}
+
+% ─── SECCIÓN 8: POSTGRESQL + SQLALCHEMY ──────────────────────────────────────
+\section{PostgreSQL + SQLAlchemy Async}
+
+\subsection{Configuración y modelos}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from sqlalchemy.ext.asyncio import (
+    create_async_engine, AsyncSession
+)
+from sqlalchemy.orm import (
+    DeclarativeBase, Mapped, mapped_column
+)
+from sqlalchemy import String, Integer, DateTime, func
+import uuid
+
+DATABASE_URL = (
+    "postgresql+asyncpg://user:pass@localhost/toku"
+)
+engine = create_async_engine(
+    DATABASE_URL, pool_size=10, max_overflow=20
+)
+
+class Base(DeclarativeBase):
+    pass
+
+class Charge(Base):
+    __tablename__ = "charges"
+
+    id: Mapped[str] = mapped_column(
+        String,
+        primary_key=True,
+        default=lambda: str(uuid.uuid4())
+    )
+    mandate_id: Mapped[str] = mapped_column(
+        String, nullable=False
+    )
+    amount: Mapped[int] = mapped_column(
+        Integer, nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String, default="pending"
+    )
+    idempotency_key: Mapped[str] = mapped_column(
+        String, unique=True, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+\end{lstlisting}
+\end{pybox}
+
+\subsection{SELECT FOR UPDATE SKIP LOCKED — patrón de workers}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from sqlalchemy import select
+
+async def get_pending_charges(
+    db: AsyncSession, limit: int = 100
+) -> list[Charge]:
+    """
+    SELECT FOR UPDATE SKIP LOCKED:
+    Cada worker agarra registros distintos sin
+    colisionar con otros workers que corren en
+    paralelo. Fundamental para procesar colas
+    de cobros con multiples instancias.
+    """
+    stmt = (
+        select(Charge)
+        .where(Charge.status == "pending")
+        .order_by(Charge.created_at.asc())
+        .limit(limit)
+        .with_for_update(skip_locked=True)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+# Dependency para FastAPI
+async def get_db():
+    async with AsyncSession(engine) as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+\end{lstlisting}
+\end{pybox}
+
+\begin{tipbox}
+\textbf{PostgreSQL vs MongoDB en Toku:} PostgreSQL para datos estructurados
+con transacciones ACID (cobros, mandatos, usuarios). MongoDB para documentos
+con esquema variable --- en Toku: los formatos de pago difieren por país
+(PIX en Brasil, SPEI en México, PAC en Chile).
+\end{tipbox}
+
+% ─── SECCIÓN 9: WEBHOOKS ─────────────────────────────────────────────────────
+\section{Webhooks Resilientes}
+
+\begin{keybox}
+Toku envía webhooks a los sistemas de sus clientes cuando ocurre un evento
+(cobro exitoso, mandato cancelado, etc.). El webhook debe ser resiliente:
+reintentar si el cliente falla, y usar HMAC para que el cliente verifique
+que el mensaje es auténtico.
+\end{keybox}
+
+\begin{pybox}
+\begin{lstlisting}[style=python]
+from fastapi import BackgroundTasks
+import httpx
+import hmac
+import hashlib
+import json
+
+@app.post("/internal/charges/{charge_id}/notify")
+async def trigger_webhook(
+    charge_id: str,
+    background_tasks: BackgroundTasks
+):
+    charge = await get_charge(charge_id)
+    background_tasks.add_task(deliver_webhook, charge)
+    return {"status": "queued"}
+
+async def deliver_webhook(
+    charge, max_retries: int = 5
+) -> None:
+    payload = {
+        "event": "charge.succeeded",
+        "data": {
+            "id": charge.id,
+            "amount": charge.amount,
+            "status": charge.status,
+        },
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    signature = compute_hmac(payload)
+
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient(
+                timeout=10.0
+            ) as client:
+                resp = await client.post(
+                    charge.webhook_url,
+                    json=payload,
+                    headers={
+                        "X-Toku-Signature": signature,
+                        "Content-Type": "application/json",
+                    }
+                )
+                # 2xx o 4xx = definitivo, no reintentar
+                if resp.status_code < 500:
+                    await mark_delivered(charge.id)
+                    return
+        except httpx.TimeoutException:
+            pass  # reintentar
+
+        await asyncio.sleep(2 ** attempt)
+
+    await mark_failed(charge.id)
+
+def compute_hmac(payload: dict) -> str:
+    """
+    HMAC-SHA256: el cliente lo recalcula con el
+    mismo secret y compara. Si coincide, el webhook
+    es autentico y no fue alterado en transito.
+    """
+    body = json.dumps(
+        payload, sort_keys=True
+    ).encode()
+    return hmac.new(
+        WEBHOOK_SECRET.encode(),
+        body,
+        hashlib.sha256
+    ).hexdigest()
+\end{lstlisting}
+\end{pybox}
+
+% ─── SECCIÓN 10: EJERCICIOS ───────────────────────────────────────────────────
+\section{Ejercicios Prácticos}
+
+\begin{ejerciciobox}{1 — Endpoint idempotente}
+Escribe un endpoint POST \texttt{/mandates} en FastAPI que reciba
+\texttt{email}, \texttt{account\_number} y \texttt{max\_amount}, con
+idempotencia por header \texttt{Idempotency-Key}. Si el mismo key se
+usa dos veces, debe devolver el mismo mandate sin crear uno nuevo.
+\end{ejerciciobox}
+
+\begin{solucionbox}{1}
+\begin{lstlisting}[style=python]
+from fastapi import FastAPI, Depends, Header
+from pydantic import BaseModel, EmailStr
+import uuid
+
+class MandateCreate(BaseModel):
+    email: EmailStr
+    account_number: str
+    max_amount: int
+
+@app.post("/mandates", status_code=201)
+async def create_mandate(
+    body: MandateCreate,
+    idempotency_key: str = Header(...),
+    db: Session = Depends(get_db)
+):
+    existing = await db.get_mandate_by_idem_key(
+        idempotency_key
+    )
+    if existing:
+        return existing
+
+    mandate = Mandate(
+        id=str(uuid.uuid4()),
+        email=body.email,
+        account_number=body.account_number,
+        max_amount=body.max_amount,
+        idempotency_key=idempotency_key,
+        status="pending"
+    )
+    await db.save(mandate)
+    return mandate
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{2 — Mock de API bancaria en pytest}
+Escribe un test que verifique que si el banco retorna timeout dos veces
+y luego aprueba, el servicio retorna \texttt{succeeded} y llamó al banco
+exactamente 3 veces.
+\end{ejerciciobox}
+
+\begin{solucionbox}{2}
+\begin{lstlisting}[style=python]
+import pytest
+from unittest.mock import AsyncMock, patch
+
+@pytest.mark.asyncio
+async def test_retries_on_bank_timeout():
+    with patch(
+        "app.services.bank.BankClient.debit",
+        new_callable=AsyncMock
+    ) as mock_debit:
+        mock_debit.side_effect = [
+            BankTimeoutError(),
+            BankTimeoutError(),
+            {"transaction_id": "TXN-1",
+             "status": "approved"}
+        ]
+
+        result = await charge_service.charge(
+            amount=10000,
+            mandate_id="MAND-1",
+            idempotency_key="IDEM-1"
+        )
+
+    assert result["status"] == "succeeded"
+    assert mock_debit.call_count == 3
+\end{lstlisting}
+\end{solucionbox}
+
+\begin{ejerciciobox}{3 — Backoff exponencial}
+Implementa una funcion \texttt{retry\_with\_backoff(func, max\_retries)}
+que reintente con delays 1s, 2s, 4s. Si se agotan los intentos, debe
+propagar la excepcion original. No debe reintentar \texttt{PermanentError}.
+\end{ejerciciobox}
+
+\begin{solucionbox}{3}
+\begin{lstlisting}[style=python]
+import asyncio
+import random
+
+class PermanentError(Exception):
+    pass
+
+async def retry_with_backoff(
+    func,
+    max_retries: int = 3,
+    base_delay: float = 1.0
+):
+    for attempt in range(max_retries):
+        try:
+            return await func()
+        except PermanentError:
+            raise  # no reintentar
+        except Exception:
+            if attempt == max_retries - 1:
+                raise
+
+            delay = base_delay * (2 ** attempt)
+            jitter = delay * 0.1 * random.uniform(-1, 1)
+            await asyncio.sleep(delay + jitter)
+\end{lstlisting}
+\end{solucionbox}
+
+% ─── CHEATSHEET ───────────────────────────────────────────────────────────────
+\newpage
+\section{Cheatsheet: Python/FastAPI en Una Página}
+
+\begin{multicols}{2}
+
+\textbf{\textcolor{pyblue}{FastAPI básico}}
+\begin{lstlisting}[style=python,numbers=none]
+@app.get("/path")
+@app.post("/path", status_code=201)
+@app.put("/path/{id}")
+@app.delete("/path/{id}")
+
+# Respuesta tipada
+response_model=MyModel
+
+# Dependency injection
+param: T = Depends(get_t)
+\end{lstlisting}
+
+\textbf{\textcolor{pyblue}{Pydantic v2}}
+\begin{lstlisting}[style=python,numbers=none]
+class M(BaseModel):
+    x: int = Field(..., gt=0)
+    y: str = Field(default="CLP")
+    z: Optional[str] = None
+
+@field_validator('x')
+@classmethod
+def check_x(cls, v): ...
+
+@model_validator(mode='after')
+def cross_check(self): ...
+\end{lstlisting}
+
+\textbf{\textcolor{pyblue}{async/await}}
+\begin{lstlisting}[style=python,numbers=none]
+async def fn() -> T:
+    result = await other()
+    return result
+
+# Paralelo
+results = await asyncio.gather(
+    fn1(), fn2(), fn3()
+)
+
+# Con errores individuales
+results = await asyncio.gather(
+    fn1(), fn2(),
+    return_exceptions=True
+)
+\end{lstlisting}
+
+\columnbreak
+
+\textbf{\textcolor{pyorange}{Idempotencia (patron)}}
+\begin{lstlisting}[style=python,numbers=none]
+existing = await db.get_by_idem_key(key)
+if existing:
+    return existing  # misma respuesta
+
+await db.create(..., status="pending")
+try:
+    result = await bank.debit(...)
+    await db.update(..., status="succeeded")
+except BankError as e:
+    await db.update(..., status="failed")
+    raise
+\end{lstlisting}
+
+\textbf{\textcolor{pyorange}{pytest + mock async}}
+\begin{lstlisting}[style=python,numbers=none]
+from unittest.mock import AsyncMock, patch
+
+with patch("module.fn",
+           new_callable=AsyncMock) as mock:
+    mock.return_value = {...}
+    mock.side_effect = [Error(), OK()]
+    mock.call_count  # veces llamado
+    mock.assert_called_once_with(...)
+\end{lstlisting}
+
+\textbf{\textcolor{pyblue}{SQLAlchemy async}}
+\begin{lstlisting}[style=python,numbers=none]
+async with AsyncSession(engine) as s:
+    stmt = (
+        select(Model)
+        .where(Model.status == "pending")
+        .with_for_update(skip_locked=True)
+        .limit(100)
+    )
+    result = await s.execute(stmt)
+    rows = result.scalars().all()
+\end{lstlisting}
+
+\textbf{\textcolor{pyblue}{JWT rapido}}
+\begin{lstlisting}[style=python,numbers=none]
+# Crear
+jwt.encode(
+    {"sub": uid, "exp": exp},
+    SECRET, algorithm="HS256"
+)
+
+# Verificar
+jwt.decode(token, SECRET,
+           algorithms=["HS256"])
+\end{lstlisting}
+
+\end{multicols}
+
+\vspace{1em}
+\noindent\textcolor{pyblue}{\rule{\linewidth}{0.8pt}}
+\vspace{0.5em}
+
+\begin{center}
+\begin{tabular}{p{5cm} p{8cm}}
+\toprule
+\textbf{Pregunta típica} & \textbf{Respuesta clave} \\
+\midrule
+¿Por qué FastAPI sobre Flask?
+  & Validación automática, async nativo, docs OpenAPI \\
+¿Qué es idempotencia?
+  & Mismo key = mismo resultado, sin duplicados \\
+¿Cuándo no usas async?
+  & Cuando el cuello de botella es CPU, no I/O \\
+¿Float o int para dinero?
+  & Siempre int (centavos) o Decimal \\
+¿PostgreSQL o MongoDB?
+  & PG para ACID; Mongo para esquema variable por país \\
+¿Cómo testeas APIs bancarias?
+  & AsyncMock + side\_effect para simular reintentos \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
