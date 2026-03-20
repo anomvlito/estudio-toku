@@ -1,0 +1,1412 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multicol}
+\usepackage{amssymb}
+\usepackage{pifont}
+
+% Símbolos D&D sin fontawesome
+\newcommand{\iconCofre}{$\bigstar$}
+\newcommand{\iconTrampa}{$\danger$}
+\newcommand{\iconHechizo}{$\lozenge$}
+\newcommand{\iconPergamino}{$\triangleright$}
+\newcommand{\iconMision}{$\blacksquare$}
+\newcommand{\iconRecompensa}{$\checkmark$}
+\newcommand{\iconLore}{$\S$}
+\newcommand{\danger}{\text{\ding{56}}}
+
+% ─── COLORES ──────────────────────────────────────────────────────────────────
+\definecolor{vuegreen}{RGB}{66,184,131}
+\definecolor{vuedark}{RGB}{35,120,85}
+\definecolor{golddnd}{RGB}{193,145,32}
+\definecolor{redrune}{RGB}{180,40,40}
+\definecolor{purplemage}{RGB}{100,60,160}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{alertred}{RGB}{220,50,50}
+\definecolor{tipgreen}{RGB}{39,174,96}
+\definecolor{warnambel}{RGB}{230,126,34}
+\definecolor{darkgray}{RGB}{50,50,50}
+\definecolor{tsblue}{RGB}{0,122,204}
+\definecolor{parchment}{RGB}{255,248,220}
+\definecolor{parchmentborder}{RGB}{160,120,60}
+
+% ─── LISTING: TypeScript/Vue ──────────────────────────────────────────────────
+\lstdefinestyle{vue}{
+  language=Java,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{vuegreen}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray},
+  frame=single, framerule=0.5pt,
+  rulecolor=\color{vuegreen!50},
+  breaklines=true, breakatwhitespace=true,
+  tabsize=2, showstringspaces=false,
+  morekeywords={ref,reactive,computed,watch,watchEffect,
+    onMounted,onUnmounted,onBeforeMount,onUpdated,
+    defineProps,defineEmits,defineExpose,
+    provide,inject,useSlots,useAttrs,
+    readonly,toRef,toRefs,
+    const,let,interface,type,async,await,
+    string,number,boolean,void,null,
+    import,from,export,default,
+    storeToRefs,defineStore,acceptHMRUpdate}
+}
+
+\lstdefinestyle{bash}{
+  language=bash,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  frame=single, framerule=0.4pt,
+  rulecolor=\color{gray!40},
+  breaklines=true, numbers=none
+}
+
+% ─── CAJAS TEMÁTICAS D&D ──────────────────────────────────────────────────────
+% Cofre del tesoro = Tip
+\newtcolorbox{cofre}{
+  colback=golddnd!12, colframe=golddnd,
+  title={\ding{72}\; \textbf{Cofre del Tesoro}},
+  fonttitle=\small\bfseries
+}
+
+% Trampa = Alerta / Error común
+\newtcolorbox{trampa}{
+  colback=redrune!10, colframe=redrune,
+  title={\ding{56}\; \textbf{¡Trampa!}},
+  fonttitle=\small\bfseries
+}
+
+% Hechizo = Concepto clave
+\newtcolorbox{hechizo}[1]{
+  colback=purplemage!8, colframe=purplemage,
+  title={\ding{168}\; \textbf{Hechizo: #1}},
+  fonttitle=\small\bfseries
+}
+
+% Pergamino = Código / ejemplo
+\newtcolorbox{pergamino}{
+  colback=vuegreen!6, colframe=vuegreen,
+  title={\ding{228}\; \textbf{Pergamino de código}},
+  fonttitle=\small\bfseries
+}
+
+% Misión = Ejercicio
+\newtcolorbox{mision}[1]{
+  colback=warnambel!8, colframe=warnambel,
+  title={\ding{110}\; \textbf{Misión #1}},
+  fonttitle=\small\bfseries
+}
+
+% Recompensa = Solución
+\newtcolorbox{recompensa}[1]{
+  colback=tipgreen!8, colframe=tipgreen!70,
+  title={\ding{52}\; \textbf{Recompensa #1}},
+  fonttitle=\small\bfseries
+}
+
+% Lore = Contexto / nota de mundo
+\newtcolorbox{lore}{
+  colback=parchment, colframe=parchmentborder,
+  title={\S\; \textbf{Lore del Mundo}},
+  fonttitle=\small\bfseries\color{parchmentborder}
+}
+
+% ─── ENCABEZADO ───────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{vuegreen}{\textbf{Vue.js — El Libro del Aventurero}}}
+\rhead{\textcolor{gray}{Guía de Componentes y Reactividad}}
+\cfoot{\thepage}
+\setlength{\headheight}{15pt}
+
+% ─── SECCIONES ────────────────────────────────────────────────────────────────
+% Sin numeración automática: los títulos incluyen "Nivel N" manualmente
+\setcounter{secnumdepth}{0}
+\titleformat{\section}
+  {\large\bfseries\color{vuegreen}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ─── PORTADA ──────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+
+  {\small\color{gray}\textit{— El Libro del Aventurero —}\par}
+  \vspace{0.4cm}
+  {\Huge\bfseries\color{vuegreen} Vue.js\par}
+  {\large\bfseries\color{vuedark} Guía del Héroe Frontend\par}
+  \vspace{0.3cm}
+  \textcolor{golddnd}{\rule{10cm}{2pt}}
+  \vspace{0.8cm}
+
+  \begin{tcolorbox}[
+    colback=parchment, colframe=parchmentborder,
+    width=11cm
+  ]
+    \centering
+    \textit{``En las tierras de Vue.js, todo componente es un héroe.
+    Aprenderá reactividad, dominará los composables y enfrentará
+    el desafío final: construir una UI que cobros recurrentes
+    ni el banco más temible logrará romper.''}\par
+    \vspace{6pt}
+    {\small — El Libro del Aventurero, Prólogo}
+  \end{tcolorbox}
+
+  \vspace{0.8cm}
+  \begin{tcolorbox}[
+    colback=vuegreen!5, colframe=vuegreen, width=10cm
+  ]
+    \centering
+    \textbf{Stack objetivo:} \texttt{Vue 3 + TypeScript + Pinia}\\[4pt]
+    \textbf{Versión:} Vue 3.4+ (Composition API)\\[4pt]
+    \textbf{Compatible con:} Stack Toku (Vue 3 + FastAPI)
+  \end{tcolorbox}
+
+  \vspace{1cm}
+  {\large Árbol de Habilidades\par}
+  \vspace{0.3cm}
+  \begin{tabular}{ll}
+    \textcolor{vuegreen}{\ding{108}} &
+      Nivel 1 — Reactividad: \texttt{ref}, \texttt{reactive}, \texttt{computed}\\
+    \textcolor{vuegreen}{\ding{108}} &
+      Nivel 2 — Ciclo de vida y \texttt{watch}\\
+    \textcolor{vuegreen}{\ding{108}} &
+      Nivel 3 — Componentes, Props y Emits\\
+    \textcolor{vuegreen}{\ding{108}} &
+      Nivel 4 — Composables: pergaminos reutilizables\\
+    \textcolor{golddnd}{\ding{72}}           &
+      Nivel 5 — Pinia: el Grimorio del Estado Global\\
+    \textcolor{golddnd}{\ding{72}}           &
+      Nivel 6 — Patrones avanzados y Slots\\
+    \textcolor{redrune}{\ding{58}}         &
+      Nivel 7 — Misiones finales (ejercicios integrados)\\
+  \end{tabular}
+
+  \vfill
+  {\small\color{gray} Marzo 2026 — Estudio Personal\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+% NIVEL 1: REACTIVIDAD
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Nivel 1 — Reactividad: el Corazón del Héroe}
+
+\begin{lore}
+En las antiguas tierras de jQuery, el DOM se manipulaba a mano, fila por fila.
+Vue.js cambió las reglas: declara \textit{qué} debe verse, y el motor reactivo
+se encarga de \textit{cómo} actualizarlo. No hay varitas mágicas --- hay
+\texttt{ref()} y \texttt{reactive()}.
+\end{lore}
+
+\subsection{ref() — La Gema de Memoria}
+
+\begin{hechizo}{ref()}
+Envuelve un valor primitivo (número, string, boolean) en un objeto reactivo.
+Dentro del \texttt{<script>} se accede con \texttt{.value}.
+En el \texttt{<template>} Vue lo desenvuelve automáticamente.
+\end{hechizo}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<script setup lang="ts">
+import { ref } from 'vue'
+
+// Tipos simples
+const gold = ref<number>(0)
+const heroName = ref<string>('Fabian')
+const isAlive = ref<boolean>(true)
+
+// Tipos complejos (array, objeto)
+const inventory = ref<string[]>([])
+const stats = ref<{ hp: number; mp: number }>({
+  hp: 100,
+  mp: 50
+})
+
+// Modificar: siempre con .value en <script>
+function collectGold(amount: number) {
+  gold.value += amount
+  inventory.value.push(`${amount} oro`)
+}
+
+// Leer el valor
+console.log(gold.value) // 0
+</script>
+
+<template>
+  <!-- En el template: sin .value -->
+  <p>{{ heroName }} tiene {{ gold }} de oro</p>
+  <button @click="collectGold(10)">Recolectar</button>
+  <ul>
+    <li v-for="item in inventory" :key="item">
+      {{ item }}
+    </li>
+  </ul>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{trampa}
+\textbf{Error frecuente:} olvidar \texttt{.value} en el \texttt{<script>}.
+\begin{lstlisting}[style=vue,numbers=none]
+// MAL: asigna directamente (rompe la reactividad)
+gold = 50
+
+// BIEN: modifica el valor reactivo
+gold.value = 50
+
+// MAL: reeemplaza el array (pierde la referencia)
+inventory.value = [...inventory.value, 'espada']
+// BIEN para arrays:
+inventory.value.push('espada')
+\end{lstlisting}
+\end{trampa}
+
+\subsection{reactive() — El Objeto Vivo}
+
+\begin{hechizo}{reactive()}
+Hace reactivo un objeto completo. No necesita \texttt{.value} para
+acceder a sus propiedades. Ideal para agrupar estado relacionado.
+\end{hechizo}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<script setup lang="ts">
+import { reactive, toRefs } from 'vue'
+
+interface HeroState {
+  name: string
+  hp: number
+  mp: number
+  inventory: string[]
+  isLoading: boolean
+  error: string | null
+}
+
+const state = reactive<HeroState>({
+  name: 'Fabian',
+  hp: 100,
+  mp: 50,
+  inventory: [],
+  isLoading: false,
+  error: null
+})
+
+// Acceso directo, sin .value
+function takeDamage(amount: number) {
+  state.hp -= amount
+  if (state.hp <= 0) {
+    state.error = 'El heroe ha caido'
+  }
+}
+
+// toRefs: destruir reactive sin perder reactividad
+const { name, hp, mp } = toRefs(state)
+// Ahora name.value, hp.value funcionan como ref
+</script>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{cofre}
+\textbf{ref vs reactive:} usa \texttt{ref()} para valores simples y
+cuando necesitas pasar el valor como parámetro (mantiene la referencia).
+Usa \texttt{reactive()} para agrupar estado relacionado de un componente.
+En la práctica, muchos equipos usan \texttt{ref()} para todo para mayor
+consistencia.
+\end{cofre}
+
+\subsection{computed() — El Oráculo}
+
+\begin{hechizo}{computed()}
+Deriva un valor de otros valores reactivos. Se recalcula
+automáticamente solo cuando cambia alguna dependencia. Nunca
+modifica --- solo lee.
+\end{hechizo}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+
+const price = ref<number>(10000)  // en centavos
+const quantity = ref<number>(3)
+const discountPct = ref<number>(10) // 10%
+
+// computed: se recalcula cuando price o quantity cambian
+const subtotal = computed(() =>
+  price.value * quantity.value
+)
+
+// computed con dependencias multiples
+const discount = computed(() =>
+  subtotal.value * (discountPct.value / 100)
+)
+
+const total = computed(() =>
+  subtotal.value - discount.value
+)
+
+// computed writable (get + set)
+const displayPrice = computed({
+  get: () => price.value / 100,        // centavos -> pesos
+  set: (pesos: number) => {
+    price.value = Math.round(pesos * 100) // pesos -> centavos
+  }
+})
+</script>
+
+<template>
+  <p>Subtotal: ${{ (subtotal / 100).toFixed(2) }}</p>
+  <p>Descuento: -${{ (discount / 100).toFixed(2) }}</p>
+  <p><strong>Total: ${{ (total / 100).toFixed(2) }}</strong></p>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{trampa}
+No hagas efectos secundarios dentro de \texttt{computed} (llamadas a API,
+mutaciones). Para eso existe \texttt{watch}. Un computed que modifica
+estado es una trampa garantizada de loops infinitos.
+\end{trampa}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% NIVEL 2: CICLO DE VIDA Y WATCH
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Nivel 2 — Ciclo de Vida y Centinelas}
+
+\subsection{Ciclo de vida de un componente}
+
+\begin{center}
+\begin{tabular}{p{3.5cm} p{9cm}}
+\toprule
+\textbf{Hook} & \textbf{Cuándo se ejecuta} \\
+\midrule
+\texttt{onBeforeMount} & Antes de que el DOM exista. No acceder a elementos. \\
+\texttt{onMounted}     & DOM listo. Ideal para llamadas a API, subscripciones. \\
+\texttt{onBeforeUpdate}& Justo antes de re-render por cambio reactivo. \\
+\texttt{onUpdated}     & Después del re-render. Raro usarlo. \\
+\texttt{onBeforeUnmount}& Componente a punto de destruirse. Cancelar suscripciones. \\
+\texttt{onUnmounted}   & Componente destruido. Limpiar timers, listeners. \\
+\texttt{onErrorCaptured}& Error en componente hijo. Para error boundaries. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const charges = ref<Charge[]>([])
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+let pollingInterval: ReturnType<typeof setInterval> | null = null
+
+// onMounted: el momento de actuar
+onMounted(async () => {
+  await loadCharges()
+
+  // Polling cada 30 segundos
+  pollingInterval = setInterval(loadCharges, 30_000)
+})
+
+// onUnmounted: limpiar lo que levantamos
+onUnmounted(() => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval)
+  }
+})
+
+async function loadCharges() {
+  isLoading.value = true
+  error.value = null
+  try {
+    const resp = await fetch('/api/charges')
+    charges.value = await resp.json()
+  } catch {
+    error.value = 'Error al cargar cobros'
+  } finally {
+    isLoading.value = false
+  }
+}
+</script>
+\end{lstlisting}
+\end{pergamino}
+
+\subsection{watch() y watchEffect() — Los Centinelas}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<script setup lang="ts">
+import { ref, watch, watchEffect } from 'vue'
+
+const searchQuery = ref('')
+const page = ref(1)
+const results = ref<any[]>([])
+
+// watch: observa fuentes especificas
+// Se ejecuta solo cuando searchQuery cambia
+watch(searchQuery, async (newVal, oldVal) => {
+  if (newVal === oldVal) return
+  page.value = 1  // resetear pagina al buscar
+  await fetchResults(newVal, 1)
+}, { debounce: 300 })  // esperar 300ms
+
+// watch con multiples fuentes
+watch([searchQuery, page], async ([query, p]) => {
+  await fetchResults(query, p)
+})
+
+// watchEffect: detecta dependencias automaticamente
+// Se ejecuta inmediatamente y cada vez que cambia algo
+watchEffect(async () => {
+  // Vue detecta que usa searchQuery.value y page.value
+  results.value = await fetchResults(
+    searchQuery.value,
+    page.value
+  )
+})
+
+// watch con opciones
+watch(searchQuery, handler, {
+  immediate: true,  // ejecutar inmediatamente al montar
+  deep: true,       // observar cambios profundos en objetos
+  flush: 'post',    // despues del render
+})
+</script>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{cofre}
+\textbf{¿watch o watchEffect?}
+Usa \texttt{watch} cuando necesitas saber el valor anterior o cuando
+quieres control explícito de qué observar.
+Usa \texttt{watchEffect} cuando la lógica es corta y quieres que
+Vue detecte automáticamente las dependencias.
+\end{cofre}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% NIVEL 3: COMPONENTES
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Nivel 3 — Componentes: Héroes y Mensajeros}
+
+\begin{lore}
+Un componente bien diseñado es como un mercenario especializado: sabe
+exactamente qué necesita (props), qué puede comunicar (emits) y no
+guarda secretos que no le pertenecen (sin estado global innecesario).
+\end{lore}
+
+\subsection{Props — Los Mensajeros}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- ChargeCard.vue -->
+<script setup lang="ts">
+interface Charge {
+  id: string
+  amount: number
+  status: 'pending' | 'succeeded' | 'failed'
+  mandateId: string
+  createdAt: string
+}
+
+// defineProps con TypeScript (sin runtime validators)
+interface Props {
+  charge: Charge
+  showDetails?: boolean  // opcional con default
+  currency?: 'CLP' | 'MXN' | 'BRL'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  showDetails: false,
+  currency: 'CLP'
+})
+
+// computed derivado de una prop
+const formattedAmount = computed(() =>
+  (props.charge.amount / 100).toLocaleString('es-CL', {
+    style: 'currency',
+    currency: props.currency
+  })
+)
+</script>
+
+<template>
+  <div class="charge-card"
+       :class="`status-${charge.status}`">
+    <span>{{ charge.id }}</span>
+    <span>{{ formattedAmount }}</span>
+    <span>{{ charge.status }}</span>
+
+    <!-- Mostrar detalles solo si se pide -->
+    <div v-if="showDetails">
+      <p>Mandato: {{ charge.mandateId }}</p>
+      <p>Fecha: {{ charge.createdAt }}</p>
+    </div>
+  </div>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\subsection{Emits — Las Señales de Humo}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- ChargeActions.vue -->
+<script setup lang="ts">
+interface Props {
+  chargeId: string
+  canRetry: boolean
+}
+
+const props = defineProps<Props>()
+
+// Emits tipados: nombre del evento -> tipos de payload
+const emit = defineEmits<{
+  'retry-charge': [chargeId: string]
+  'view-details': [chargeId: string]
+  'export-pdf': []
+}>()
+
+async function handleRetry() {
+  // validar antes de emitir
+  if (!props.canRetry) return
+  emit('retry-charge', props.chargeId)
+}
+</script>
+
+<template>
+  <div class="actions">
+    <button
+      :disabled="!canRetry"
+      @click="handleRetry"
+    >
+      Reintentar cobro
+    </button>
+    <button @click="emit('view-details', chargeId)">
+      Ver detalle
+    </button>
+    <button @click="emit('export-pdf')">
+      Exportar PDF
+    </button>
+  </div>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- Padre: ChargeList.vue -->
+<script setup lang="ts">
+import ChargeActions from './ChargeActions.vue'
+
+async function onRetry(chargeId: string) {
+  await retryCharge(chargeId)
+  await refreshList()
+}
+</script>
+
+<template>
+  <!-- Escuchar emits con @nombre-evento -->
+  <ChargeActions
+    :charge-id="charge.id"
+    :can-retry="charge.status === 'failed_retryable'"
+    @retry-charge="onRetry"
+    @view-details="router.push(`/charges/${$event}`)"
+    @export-pdf="downloadPDF()"
+  />
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{trampa}
+Las props son \textbf{de solo lectura}. Jamás las modifiques directamente
+en el componente hijo --- Vue lanzará una advertencia. Si necesitas un
+estado local basado en una prop, crea un \texttt{ref} derivado:
+\begin{lstlisting}[style=vue,numbers=none]
+const props = defineProps<{ initialValue: number }>()
+// MAL:
+props.initialValue = 50
+
+// BIEN: copia local
+const localValue = ref(props.initialValue)
+\end{lstlisting}
+\end{trampa}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% NIVEL 4: COMPOSABLES
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Nivel 4 — Composables: Pergaminos Reutilizables}
+
+\begin{lore}
+Los composables son la magia que todo Mago de Vue aprende en el Nivel 4.
+Un composable encapsula lógica stateful reutilizable: se lleva el estado,
+el ciclo de vida y las funciones juntos en un pergamino que cualquier
+componente puede invocar.
+\end{lore}
+
+\subsection{Anatomía de un composable}
+
+Un composable es simplemente una función que empieza con \texttt{use}
+y utiliza la API de composición de Vue internamente.
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+// composables/useCharges.ts
+import { ref, computed, onMounted } from 'vue'
+
+interface Charge {
+  id: string
+  amount: number
+  status: string
+}
+
+export function useCharges(mandateId?: string) {
+  const charges = ref<Charge[]>([])
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
+
+  // Estado derivado
+  const total = computed(() =>
+    charges.value.reduce((sum, c) => sum + c.amount, 0)
+  )
+  const succeeded = computed(() =>
+    charges.value.filter(c => c.status === 'succeeded')
+  )
+  const failed = computed(() =>
+    charges.value.filter(c => c.status === 'failed')
+  )
+
+  async function load() {
+    isLoading.value = true
+    error.value = null
+    try {
+      const url = mandateId
+        ? `/api/charges?mandate=${mandateId}`
+        : '/api/charges'
+      const resp = await fetch(url)
+      if (!resp.ok) throw new Error(await resp.text())
+      charges.value = await resp.json()
+    } catch (e) {
+      error.value = e instanceof Error
+        ? e.message
+        : 'Error desconocido'
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function retry(chargeId: string) {
+    await fetch(`/api/charges/${chargeId}/retry`, {
+      method: 'POST'
+    })
+    await load()  // recargar lista
+  }
+
+  // Cargar automaticamente al montar
+  onMounted(load)
+
+  // Exponer lo que el componente necesita
+  return {
+    charges,
+    isLoading,
+    error,
+    total,
+    succeeded,
+    failed,
+    load,
+    retry
+  }
+}
+\end{lstlisting}
+\end{pergamino}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- Uso en cualquier componente -->
+<script setup lang="ts">
+import { useCharges } from '@/composables/useCharges'
+
+// Sin argumento: todos los cobros
+const { charges, isLoading, error, total } = useCharges()
+
+// Con argumento: cobros de un mandato
+const {
+  charges: mandateCharges,
+  retry
+} = useCharges('MAND-001')
+</script>
+
+<template>
+  <div v-if="isLoading">Cargando...</div>
+  <div v-else-if="error" class="error">{{ error }}</div>
+  <ul v-else>
+    <li v-for="charge in charges" :key="charge.id">
+      {{ charge.id }} -- {{ charge.amount }}
+      <button @click="retry(charge.id)">Reintentar</button>
+    </li>
+  </ul>
+  <p>Total: {{ total }}</p>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\subsection{Composable de formulario con validación}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+// composables/useForm.ts
+import { reactive, ref, computed } from 'vue'
+
+type Rules<T> = {
+  [K in keyof T]?: (value: T[K]) => string | null
+}
+
+export function useForm<T extends object>(
+  initialValues: T,
+  rules?: Rules<T>
+) {
+  const values = reactive({ ...initialValues }) as T
+  const errors = reactive({} as Record<keyof T, string | null>)
+  const touched = reactive({} as Record<keyof T, boolean>)
+  const isSubmitting = ref(false)
+
+  function validate(): boolean {
+    if (!rules) return true
+    let valid = true
+    for (const key in rules) {
+      const rule = rules[key]
+      if (rule) {
+        const err = rule(values[key])
+        errors[key] = err
+        if (err) valid = false
+      }
+    }
+    return valid
+  }
+
+  const isValid = computed(() =>
+    !Object.values(errors).some(Boolean)
+  )
+
+  async function handleSubmit(
+    onSubmit: (values: T) => Promise<void>
+  ) {
+    if (!validate()) return
+    isSubmitting.value = true
+    try {
+      await onSubmit({ ...values })
+    } finally {
+      isSubmitting.value = false
+    }
+  }
+
+  return { values, errors, touched,
+           isValid, isSubmitting, validate,
+           handleSubmit }
+}
+\end{lstlisting}
+\end{pergamino}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% NIVEL 5: PINIA
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Nivel 5 — Pinia: el Grimorio del Estado Global}
+
+\begin{lore}
+Pinia es el grimorio oficial de Vue 3. Cuando el estado necesita
+ser compartido entre componentes que no tienen relación directa
+(no padre-hijo), o cuando persiste entre rutas, es hora de
+invocar a Pinia. Reemplazó a Vuex como el grimorio estándar.
+\end{lore}
+
+\subsection{Definir un store}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+// stores/useChargeStore.ts
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+
+// Setup store (formato moderno, igual a composable)
+export const useChargeStore = defineStore('charges', () => {
+  // State
+  const charges = ref<Charge[]>([])
+  const isLoading = ref(false)
+  const selectedId = ref<string | null>(null)
+
+  // Getters (computed)
+  const selected = computed(() =>
+    charges.value.find(c => c.id === selectedId.value)
+  )
+  const total = computed(() =>
+    charges.value.reduce((sum, c) => sum + c.amount, 0)
+  )
+  const pendingCount = computed(() =>
+    charges.value.filter(c => c.status === 'pending').length
+  )
+
+  // Actions
+  async function fetchAll() {
+    isLoading.value = true
+    try {
+      const resp = await fetch('/api/charges')
+      charges.value = await resp.json()
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function retryCharge(id: string) {
+    await fetch(`/api/charges/${id}/retry`, {
+      method: 'POST'
+    })
+    // Actualizar localmente (optimistic update)
+    const charge = charges.value.find(c => c.id === id)
+    if (charge) charge.status = 'processing'
+    // Recargar desde el servidor
+    await fetchAll()
+  }
+
+  function select(id: string) {
+    selectedId.value = id
+  }
+
+  return {
+    charges, isLoading, selectedId,
+    selected, total, pendingCount,
+    fetchAll, retryCharge, select
+  }
+})
+
+// Para Hot Module Replacement en desarrollo
+if (import.meta.hot) {
+  import.meta.hot.accept(
+    acceptHMRUpdate(useChargeStore, import.meta.hot)
+  )
+}
+\end{lstlisting}
+\end{pergamino}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- Uso en componentes -->
+<script setup lang="ts">
+import { useChargeStore } from '@/stores/useChargeStore'
+import { storeToRefs } from 'pinia'
+
+const store = useChargeStore()
+
+// storeToRefs: desestructurar sin perder reactividad
+// (solo para state y getters, NO para actions)
+const { charges, isLoading, total, pendingCount }
+  = storeToRefs(store)
+
+// Actions: desestructurar directamente
+const { fetchAll, retryCharge, select } = store
+
+// Llamar al montar
+onMounted(fetchAll)
+</script>
+
+<template>
+  <p>{{ pendingCount }} cobros pendientes</p>
+  <p>Total: {{ total }}</p>
+  <div v-if="isLoading">Cargando...</div>
+  <ul v-else>
+    <li v-for="charge in charges" :key="charge.id">
+      <button @click="select(charge.id)">
+        {{ charge.id }}
+      </button>
+      <button @click="retryCharge(charge.id)">
+        Reintentar
+      </button>
+    </li>
+  </ul>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{cofre}
+\textbf{¿Composable o Pinia?}
+Usa un \textbf{composable} cuando el estado es local a un árbol de
+componentes o a una ruta. Usa \textbf{Pinia} cuando el estado necesita
+persistir entre rutas, ser compartido entre árboles no relacionados
+o ser accedido desde fuera de componentes (ej. interceptors de axios).
+\end{cofre}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% NIVEL 6: SLOTS Y PATRONES AVANZADOS
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Nivel 6 — Slots y Patrones Avanzados}
+
+\subsection{Slots — Las Puertas del Héroe}
+
+Los slots permiten que el padre inyecte contenido dentro del hijo,
+creando componentes flexibles y reutilizables.
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- BaseCard.vue: componente generico con slots -->
+<script setup lang="ts">
+defineProps<{
+  title: string
+  variant?: 'default' | 'danger' | 'success'
+}>()
+</script>
+
+<template>
+  <div class="card" :class="`card--${variant ?? 'default'}`">
+    <!-- Slot nombrado para el header -->
+    <header>
+      <h3>{{ title }}</h3>
+      <slot name="actions" />
+    </header>
+
+    <!-- Slot default: contenido principal -->
+    <main>
+      <slot />
+    </main>
+
+    <!-- Slot opcional con fallback -->
+    <footer>
+      <slot name="footer">
+        <p class="muted">Sin acciones adicionales</p>
+      </slot>
+    </footer>
+  </div>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- Uso de BaseCard -->
+<template>
+  <BaseCard title="Cobro #123" variant="success">
+    <!-- Slot nombrado: template con #nombre -->
+    <template #actions>
+      <button @click="exportPDF()">PDF</button>
+      <button @click="retry()">Reintentar</button>
+    </template>
+
+    <!-- Slot default: contenido directo -->
+    <ChargeDetails :charge="charge" />
+
+    <!-- Slot footer -->
+    <template #footer>
+      <span>Procesado el {{ charge.createdAt }}</span>
+    </template>
+  </BaseCard>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\subsection{Scoped Slots — El Pergamino que Habla de Vuelta}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- DataTable.vue: lista generica con scoped slot -->
+<script setup lang="ts" generic="T">
+defineProps<{ items: T[] }>()
+</script>
+
+<template>
+  <table>
+    <tbody>
+      <tr v-for="(item, index) in items" :key="index">
+        <!-- Scoped slot: expone item y index al padre -->
+        <slot :item="item" :index="index" />
+      </tr>
+    </tbody>
+  </table>
+</template>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+<!-- Uso: el padre decide como renderizar cada fila -->
+<DataTable :items="charges">
+  <template #default="{ item: charge, index }">
+    <td>{{ index + 1 }}</td>
+    <td>{{ charge.id }}</td>
+    <td>{{ charge.amount }}</td>
+    <td>
+      <span :class="charge.status">
+        {{ charge.status }}
+      </span>
+    </td>
+  </template>
+</DataTable>
+\end{lstlisting}
+\end{pergamino}
+
+\subsection{provide / inject — El Oráculo de la Torre}
+
+\begin{pergamino}
+\begin{lstlisting}[style=vue]
+// Patron: proveer contexto desde un componente raiz
+// sin prop drilling (pasar props nivel a nivel)
+
+// AppRoot.vue o el componente raiz del modulo
+<script setup lang="ts">
+import { provide, ref } from 'vue'
+
+const currentUser = ref<User | null>(null)
+const theme = ref<'light' | 'dark'>('light')
+
+// Clave tipada para evitar colisiones
+provide('currentUser', currentUser)
+provide('theme', theme)
+</script>
+
+// --- Cualquier descendiente, a cualquier nivel ---
+<script setup lang="ts">
+import { inject, ref, Ref } from 'vue'
+
+// inject con tipo y valor por defecto
+const currentUser = inject<Ref<User | null>>(
+  'currentUser',
+  ref(null)
+)
+
+const theme = inject<Ref<'light' | 'dark'>>(
+  'theme',
+  ref('light')
+)
+</script>
+\end{lstlisting}
+\end{pergamino}
+
+\begin{cofre}
+\textbf{provide/inject vs Pinia:} Usa \texttt{provide/inject} para
+datos de contexto del componente (tema, usuario activo en un módulo).
+Usa Pinia para estado global de aplicación que persiste entre rutas.
+\end{cofre}
+
+\subsection{Directivas esenciales en el template}
+
+\begin{center}
+\begin{tabular}{p{3.5cm} p{9cm}}
+\toprule
+\textbf{Directiva} & \textbf{Uso} \\
+\midrule
+\texttt{v-if / v-else-if / v-else}
+  & Renderizado condicional (elimina el DOM) \\
+\texttt{v-show}
+  & Ocultar con \texttt{display:none} (mantiene el DOM) \\
+\texttt{v-for="x in xs" :key}
+  & Renderizado de listas. \texttt{:key} es obligatorio \\
+\texttt{v-model}
+  & Two-way binding en inputs, selects, checkboxes \\
+\texttt{:prop="valor"}
+  & Bind dinámico de atributos/props \\
+\texttt{@evento="handler"}
+  & Escuchar eventos del DOM o emits de hijo \\
+\texttt{@click.prevent}
+  & Modificadores: prevent, stop, once, self \\
+\texttt{v-memo="[dep]"}
+  & Memorización de nodo (optimización) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% NIVEL 7: MISIONES
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Nivel 7 — Misiones Finales}
+
+\begin{mision}{1 — La Joya del Formulario}
+Crea un componente \texttt{MandateForm.vue} que permita crear un mandato
+bancario. Debe tener campos para email, número de cuenta y monto máximo.
+El botón de envío se deshabilita si algún campo está vacío o el monto
+es inválido. Al enviar exitosamente, emite \texttt{'mandate-created'} con
+los datos.
+\end{mision}
+
+\begin{recompensa}{1}
+\begin{lstlisting}[style=vue]
+<script setup lang="ts">
+import { reactive, computed } from 'vue'
+
+const emit = defineEmits<{
+  'mandate-created': [mandate: Mandate]
+}>()
+
+const form = reactive({
+  email: '', accountNumber: '', maxAmount: ''
+})
+const isSubmitting = ref(false)
+
+const isValid = computed(() =>
+  form.email.includes('@') &&
+  form.accountNumber.length >= 6 &&
+  Number(form.maxAmount) > 0
+)
+
+async function submit() {
+  if (!isValid.value) return
+  isSubmitting.value = true
+  try {
+    const resp = await fetch('/api/mandates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: form.email,
+        accountNumber: form.accountNumber,
+        maxAmount: Math.round(
+          Number(form.maxAmount) * 100
+        )
+      })
+    })
+    const mandate = await resp.json()
+    emit('mandate-created', mandate)
+  } finally {
+    isSubmitting.value = false
+  }
+}
+</script>
+
+<template>
+  <form @submit.prevent="submit">
+    <input v-model="form.email"
+           type="email" placeholder="Email" />
+    <input v-model="form.accountNumber"
+           placeholder="N. de cuenta" />
+    <input v-model="form.maxAmount"
+           type="number" placeholder="Monto max ($)" />
+    <button :disabled="!isValid || isSubmitting">
+      {{ isSubmitting ? 'Creando...' : 'Crear mandato' }}
+    </button>
+  </form>
+</template>
+\end{lstlisting}
+\end{recompensa}
+
+\begin{mision}{2 — El Composable Encantado}
+Crea un composable \texttt{usePagination<T>} que reciba una URL de API
+y exponga: \texttt{items}, \texttt{page}, \texttt{totalPages},
+\texttt{isLoading}, \texttt{nextPage()}, \texttt{prevPage()}.
+Debe cargar automáticamente al cambiar de página.
+\end{mision}
+
+\begin{recompensa}{2}
+\begin{lstlisting}[style=vue]
+// composables/usePagination.ts
+import { ref, computed, watch } from 'vue'
+
+export function usePagination<T>(
+  baseUrl: string,
+  pageSize: number = 10
+) {
+  const items = ref<T[]>([])
+  const page = ref(1)
+  const total = ref(0)
+  const isLoading = ref(false)
+
+  const totalPages = computed(() =>
+    Math.ceil(total.value / pageSize)
+  )
+  const hasPrev = computed(() => page.value > 1)
+  const hasNext = computed(
+    () => page.value < totalPages.value
+  )
+
+  async function load() {
+    isLoading.value = true
+    try {
+      const url =
+        `${baseUrl}?page=${page.value}` +
+        `&limit=${pageSize}`
+      const resp = await fetch(url)
+      const data = await resp.json()
+      items.value = data.items
+      total.value = data.total
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Recargar al cambiar de pagina
+  watch(page, load, { immediate: true })
+
+  const nextPage = () => {
+    if (hasNext.value) page.value++
+  }
+  const prevPage = () => {
+    if (hasPrev.value) page.value--
+  }
+
+  return {
+    items, page, total, totalPages,
+    isLoading, hasPrev, hasNext,
+    nextPage, prevPage
+  }
+}
+\end{lstlisting}
+\end{recompensa}
+
+\begin{mision}{3 — El Grimorio en Acción}
+Modifica el store \texttt{useChargeStore} para que soporte
+\textbf{optimistic updates}: al hacer retry, actualiza el estado
+local inmediatamente a \texttt{'processing'} y revierte a
+\texttt{'failed'} si la API falla.
+\end{mision}
+
+\begin{recompensa}{3}
+\begin{lstlisting}[style=vue]
+// En useChargeStore.ts -- action retryCharge mejorada
+async function retryCharge(id: string) {
+  const charge = charges.value.find(c => c.id === id)
+  if (!charge) return
+
+  // Guardar estado original
+  const originalStatus = charge.status
+
+  // Optimistic update: actualizar UI inmediatamente
+  charge.status = 'processing'
+
+  try {
+    await fetch(`/api/charges/${id}/retry`, {
+      method: 'POST'
+    })
+    // Recargar estado real del servidor
+    await fetchAll()
+  } catch {
+    // Revertir si falla
+    charge.status = originalStatus
+    throw new Error('No se pudo reintentar el cobro')
+  }
+}
+\end{lstlisting}
+\end{recompensa}
+
+% ══════════════════════════════════════════════════════════════════════════════
+% CHEATSHEET
+% ══════════════════════════════════════════════════════════════════════════════
+\newpage
+\section{El Pergamino Mayor — Cheatsheet Vue 3}
+
+\begin{multicols}{2}
+
+\textbf{\textcolor{vuegreen}{Reactividad}}
+\begin{lstlisting}[style=vue,numbers=none]
+const x = ref<number>(0)
+x.value++          // modificar
+const { a, b } = toRefs(reactive({a:1,b:2}))
+const c = computed(() => x.value * 2)
+\end{lstlisting}
+
+\textbf{\textcolor{vuegreen}{Ciclo de vida}}
+\begin{lstlisting}[style=vue,numbers=none]
+onMounted(async () => { await load() })
+onUnmounted(() => { clearInterval(timer) })
+\end{lstlisting}
+
+\textbf{\textcolor{vuegreen}{Watchers}}
+\begin{lstlisting}[style=vue,numbers=none]
+watch(x, (nuevo, viejo) => { ... })
+watch([x, y], ([nx, ny]) => { ... })
+watchEffect(() => { /* usa x.value */ })
+\end{lstlisting}
+
+\textbf{\textcolor{vuegreen}{Componente}}
+\begin{lstlisting}[style=vue,numbers=none]
+const props = defineProps<{ id: string }>()
+const emit = defineEmits<{
+  'event': [payload: string]
+}>()
+defineExpose({ publicMethod })
+\end{lstlisting}
+
+\columnbreak
+
+\textbf{\textcolor{golddnd}{Pinia}}
+\begin{lstlisting}[style=vue,numbers=none]
+const store = defineStore('name', () => {
+  const x = ref(0)         // state
+  const y = computed(...)  // getter
+  async function act() {}  // action
+  return { x, y, act }
+})
+// En componente:
+const s = useMyStore()
+const { x } = storeToRefs(s)
+s.act()
+\end{lstlisting}
+
+\textbf{\textcolor{vuegreen}{Template}}
+\begin{lstlisting}[style=vue,numbers=none]
+v-if="cond"
+v-for="x in xs" :key="x.id"
+v-model="ref"
+:prop="expr"
+@click="fn"
+@click.prevent.stop
+<slot name="header" />
+<template #header>...</template>
+\end{lstlisting}
+
+\textbf{\textcolor{purplemage}{Composable pattern}}
+\begin{lstlisting}[style=vue,numbers=none]
+export function useX() {
+  const state = ref(...)
+  onMounted(load)
+  async function load() { ... }
+  return { state, load }
+}
+\end{lstlisting}
+
+\end{multicols}
+
+\vspace{1em}
+\noindent\textcolor{vuegreen}{\rule{\linewidth}{0.8pt}}
+\vspace{0.5em}
+
+\begin{center}
+\begin{tabular}{p{5cm} p{8cm}}
+\toprule
+\textbf{Pregunta} & \textbf{Respuesta clave} \\
+\midrule
+\texttt{ref} vs \texttt{reactive}
+  & \texttt{ref} para primitivos y pasar referencias;
+    \texttt{reactive} para objetos de estado agrupado \\
+\texttt{computed} vs \texttt{watch}
+  & \texttt{computed} deriva un valor (sin efectos);
+    \texttt{watch} reacciona a cambios con efectos \\
+Composable vs Pinia
+  & Composable = estado local al árbol;
+    Pinia = estado global entre rutas \\
+\texttt{v-if} vs \texttt{v-show}
+  & \texttt{v-if} elimina el DOM;
+    \texttt{v-show} oculta con CSS \\
+¿Por qué \texttt{:key} en \texttt{v-for}?
+  & Vue lo usa para identificar nodos y hacer
+    reconciliación eficiente del DOM \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
